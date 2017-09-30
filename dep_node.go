@@ -1,6 +1,10 @@
 package di
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+	"strings"
+)
 
 type depNode struct {
 	Constructor reflect.Value
@@ -44,16 +48,58 @@ func (dn *depNode) AddEdge(node *depNode) {
 	}
 }
 
-func (dn *depNode) MissingDependencies() []reflect.Type {
-	missing := make([]reflect.Type, 0, len(dn.DependsOn))
+func (dn *depNode) CheckForCycle(seen []*depNode, checked map[*depNode]bool) error {
+	hasSeen := func(dn2 *depNode) bool {
+		for _, node := range seen {
+			if node == dn2 {
+				return true
+			}
 
-	for _, dependsOn := range dn.DependsOn {
-		_, hasEdge := dn.Edges[dependsOn]
-
-		if hasEdge == false {
-			missing = append(missing, dependsOn)
+			return false
 		}
 	}
 
-	return missing
+	for node := range dn.Edges {
+		if checked[node] {
+			continue
+		}
+
+		if hasSeen(node) {
+			// print and return err
+			path := make([]string, len(seen), len(seen)+1)
+			for index, seenNode := range seen {
+				path[index] = seenNode.Type.String()
+			}
+			path = append(path, node.Type.String())
+			pathStr := strings.Join(path, "->")
+			return nil, fmt.Errorf("di: circular dependency detected: %v", pathStr)
+		}
+
+		seenCopy := make([]*depNode, len(seen), len(seen)+1)
+		copy(seenCopy, seen)
+		seenCopy = append(seenCopy, node)
+		err := node.checkForCycle(seenCopy, checked)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	checked[dn] = true
+	return nil
+}
+
+func (dn *depNode) IsLeaf() bool {
+	return len(dn.DependsOn) == 0
+}
+
+func (dn *depNode) NewValue(ins []reflect.Value) (reflect.Value, error) {
+	outs := dn.Constructor.Call(ins)
+
+	var err error
+	if dn.ReturnsErr {
+		err = outs[1].Interface().(error)
+	}
+
+	return outs[0], err
 }

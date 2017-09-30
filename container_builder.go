@@ -40,17 +40,45 @@ func (cw *containerWriter) Add(constructor interface{}, lifetime Lifetime) error
 }
 
 func (cw *containerWriter) Build() (IContainer, error) {
-	missing := make([]reflect.Type, 0, len(cw.deps))
+	checked := make(map[*depNode]bool, len(cw.deps))
 
 	for _, node := range cw.deps {
-		missing = append(missing, node.MissingDependencies()...)
-	}
+		if checked[node] {
+			continue
+		}
 
-	if len(missing) > 0 {
-		return nil, fmt.Errorf("di: the following dependencies have not been defined: %v", missing)
+		err := node.CheckForCycle([]*depNode{}, checked)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
+}
+
+func (cw *containerWriter) join(cw2 *containerWriter) (*containerWriter, error) {
+	cw3 := &containerWriter{
+		deps: make(map[reflect.Type]*depNode, len(cw.deps)+len(cw2.deps)),
+	}
+
+	for node := range cw.deps {
+		err := cw3.Add(node.Constructor, node.Lifetime)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for node := range cw2.deps {
+		err := cw3.Add(node.Constructor, node.Lifetime)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return cw3, nil
 }
 
 func (cw *containerWriter) verifyConstructor(constructorValue reflect.Value) (reflect.Type, error) {
