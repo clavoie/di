@@ -2,22 +2,29 @@ package di
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 )
 
 type IContainer interface {
-	Curry(fn interface{}) (interface{}, error)
-	Invoke(fn interface{}) error
+	//Curry(fn interface{}) (interface{}, error)
+	//Invoke(fn interface{}) error
+	HttpHandler(fn interface{}) (func(http.ResponseWriter, *http.Request), error)
 }
 
 type container struct {
+	allDeps    map[reflect.Type]*depNode
 	deps       map[reflect.Type]*depNode
+	perHttp    map[reflect.Type]*depNode
+	perResolve map[reflect.Type]*depNode
 	singletons map[reflect.Type]*singleton
 }
 
 func newContainer(cw *containerWriter) *container {
-	deps := make(map[reflect.Type]*depNode, len(cw.deps))
-	singletons := make(map[reflect.Type]*singleton, len(cw.deps))
+	deps := make(map[reflect.Type]*depNode)
+	perHttp := make(map[reflect.Type]*depNode)
+	perResolve := make(map[reflect.Type]*depNode)
+	singletons := make(map[reflect.Type]*singleton)
 
 	for rtype, node := range cw.deps {
 		switch node.Lifetime {
@@ -26,12 +33,17 @@ func newContainer(cw *containerWriter) *container {
 		case LifetimePerDependency:
 			deps[rtype] = node
 		case LifetimePerHttpRequest:
-			panic("di: per http request not supported yet")
+			perHttp[rtype] = node
+		case LifetimePerResolution:
+			perResolve[rtype] = node
 		}
 	}
 
 	return &container{
+		allDeps:    cw.deps,
 		deps:       deps,
+		perHttp:    perHttp,
+		perResolve: perResolve,
 		singletons: singletons,
 	}
 }
@@ -51,30 +63,9 @@ func (c *Container) Curry(fn interface{}) (interface{}, error) {
 	}
 }
 
-func (c *container) resolve(rtype reflect.Type) (reflect.Value, error) {
-
-}
-
-func (c *container) resolveCacheMiss(node *depNode) (reflect.Value, error) {
-	if node.IsLeaf() {
-		return node.NewValue([]reflect.Value{})
-	}
-
-	// TODO magic
-}
-
-func (c *container) resolveSingleton(rtype reflect.Type) (reflect.Value, error) {
-	existingValue := c.singletons[rtype]
-
-	if existingValue.Value.IsValid() {
-		return existingValue.Value, nil
-	}
-
-	value, err := c.resolveCacheMiss(rtype)
+func (c *Container) HttpHandler(fn interface{}) (func(http.ResponseWriter, *http.Request), error) {
+	err := c.verifyFn(fn)
 	if err != nil {
-		return value, err
+		return nil, err
 	}
-
-	existingValue.Value = value
-	return value, nil
 }
