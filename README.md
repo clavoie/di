@@ -1,4 +1,5 @@
-# di
+# di ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master)
+
 Dependency injection for Go
 
 ## Docs
