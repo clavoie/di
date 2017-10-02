@@ -2,6 +2,8 @@ package di
 
 import "net/http"
 
+// IHttpResolver is an IResolver which can also generate http request
+// handlers that resolve their dependencies
 type IHttpResolver interface {
 	IResolver
 

@@ -1,5 +1,7 @@
 package di
 
+// IResolver is an object which knows how to resolve dependency chains
+// and instantiate the dependencies according to their cache policies
 type IResolver interface {
 	// Curry takes a func, resolves all parameters of the func which
 	// are known to the container, and returns a new func with those

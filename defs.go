@@ -38,7 +38,7 @@ func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
 		return fmt.Errorf("di: unknown lifetime: %v", lifetime)
 	}
 
-	newNode := newDepNode(constructorValue, lifetime)
+	newNode := newDepNode(constructorValue, lifetime, d.deps)
 	d.deps[arg1] = newNode
 	for _, node := range d.deps {
 		node.AddEdge(newNode)

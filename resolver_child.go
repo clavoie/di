@@ -6,19 +6,27 @@ import (
 	"reflect"
 )
 
+// iresolverType is typeof(IResolver)
 var iresolverType = reflect.TypeOf((*IResolver)(nil)).Elem()
 
+// resolverChild is an object which resolves a dependency chain for
+// one call of Resolve().
+//
+// resolverChild injects itself into the IResolver, and can be resolved
+// by any dependencies as IResolver
 type resolverChild struct {
-	container  *resolverParent
+	parent     *resolverParent
 	closables  []IHttpClosable
 	perDep     map[reflect.Type]*depNode
 	perHttp    *resolveCache
 	perResolve *resolveCache
 }
 
+// newResolverChild returns a new resolverChild. IResolver is mapped
+// to the instance of this object
 func newResolverChild(c *resolverParent) *resolverChild {
 	resolver := &resolverChild{
-		container:  c,
+		parent:     c,
 		closables:  make([]IHttpClosable, 0),
 		perDep:     c.deps,
 		perHttp:    newResolveCache(),
@@ -30,6 +38,9 @@ func newResolverChild(c *resolverParent) *resolverChild {
 	return resolver
 }
 
+// newHttpResolverChild returns a new resolverChild which has the
+// http.ResponseWriter and *http.Request mapped for injection into
+// dependencies
 func newHttpResolverChild(c *resolverParent, w http.ResponseWriter, r *http.Request) *resolverChild {
 	resolver := newResolverChild(c)
 
@@ -123,10 +134,12 @@ func (r *resolverChild) Resolve(ptrToIface interface{}) error {
 	return nil
 }
 
+// lifetimeToCache maps a Lifetime to one of the variosu caches of the
+// resolver, returning the cache
 func (r *resolverChild) lifetimeToCache(l Lifetime) *resolveCache {
 	switch l {
 	case Singleton:
-		return r.container.singletons
+		return r.parent.singletons
 	case PerHttpRequest:
 		return r.perHttp
 	case PerResolution:
@@ -136,8 +149,30 @@ func (r *resolverChild) lifetimeToCache(l Lifetime) *resolveCache {
 	return resolverNoCache
 }
 
+// resolveCache attempts to resolve a value for a type using this
+// resolver's cache. ErrDefMissing is returned if there is no
+// definition in this resolver for the specified type
 func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) {
-	dep, hasDep := r.container.allDeps[rtype]
+	if rtype == iresolverType {
+		return reflect.ValueOf(r), nil
+	}
+
+	if rtype == requestType || rtype == responseWriterType {
+		httpValue, hasValue := r.perHttp.Get(rtype)
+
+		if hasValue == false {
+			return reflect.Value{}, newErrDefMissing(rtype)
+		}
+
+		value, hasValue := httpValue.Value()
+		if hasValue == false {
+			return reflect.Value{}, newErrDefMissing(rtype)
+		}
+
+		return value, nil
+	}
+
+	dep, hasDep := r.parent.allDeps[rtype]
 	if hasDep == false {
 		return reflect.Value{}, newErrDefMissing(rtype)
 	}
@@ -157,6 +192,9 @@ func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) 
 	return r.resolveNoCache(dep, cacheValue)
 }
 
+// resolveNoCache is called on a resolve cache miss. It attempts to
+// resolve the missing type, and set the cache of the type which is
+// missing with the instantiated value
 func (r *resolverChild) resolveNoCache(node *depNode, s *singleton) (reflect.Value, error) {
 	if node.IsLeaf() {
 		return s.SetValue([]reflect.Value{}, &r.closables)

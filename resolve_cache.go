@@ -2,8 +2,12 @@ package di
 
 import "reflect"
 
+// resolverNoCache is an instance of resolveCache indicating no
+// caching should take place
 var resolverNoCache = newResolveCache()
 
+// resolveCache is a cache of values instantiated along the
+// dependency chain
 type resolveCache struct {
 	cache map[reflect.Type]*singleton
 }

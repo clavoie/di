@@ -13,9 +13,10 @@ type depNode struct {
 	Lifetime    Lifetime
 	ReturnsErr  bool
 	Type        reflect.Type
+	TypeName    string
 }
 
-func newDepNode(constructor reflect.Value, lifetime Lifetime) *depNode {
+func newDepNode(constructor reflect.Value, lifetime Lifetime, depMap map[reflect.Type]*depNode) *depNode {
 	var node depNode
 
 	node.Constructor = constructor
@@ -23,6 +24,7 @@ func newDepNode(constructor reflect.Value, lifetime Lifetime) *depNode {
 
 	constructorType := constructor.Type()
 	node.Type = constructorType.Out(0)
+	node.TypeName = node.Type.String()
 
 	if constructorType.NumOut() == 2 {
 		node.ReturnsErr = true
@@ -30,13 +32,20 @@ func newDepNode(constructor reflect.Value, lifetime Lifetime) *depNode {
 
 	numIn := constructorType.NumIn()
 	deps := make([]reflect.Type, numIn)
+	edges := make(map[reflect.Type]*depNode, numIn)
 
 	for index := range deps {
-		deps[index] = constructorType.In(index)
+		inType := constructorType.In(index)
+		deps[index] = inType
+
+		edgeNode, hasNode := depMap[inType]
+		if hasNode {
+			edges[inType] = edgeNode
+		}
 	}
 
 	node.DependsOn = deps
-	node.Edges = make(map[reflect.Type]*depNode, numIn)
+	node.Edges = edges
 
 	return &node
 }

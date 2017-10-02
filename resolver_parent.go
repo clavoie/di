@@ -5,6 +5,9 @@ import (
 	"reflect"
 )
 
+// resolverParent is a type which contains all the combined
+// dependency definitions, and created new resolverChild
+// types to handle Resolve() requests.
 type resolverParent struct {
 	allDeps    map[reflect.Type]*depNode
 	deps       map[reflect.Type]*depNode
@@ -13,6 +16,8 @@ type resolverParent struct {
 	singletons *resolveCache
 }
 
+// NewResolver returns a new instance of IHttpResolver from
+// a collection of dependency definitions
 func NewResolver(d *Defs) (IHttpResolver, error) {
 	allDeps, err := d.build()
 
