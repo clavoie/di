@@ -1,4 +1,4 @@
-# di ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master)
+# di ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/clavoie/di)](https://goreportcard.com/report/github.com/clavoie/di)
 
 Dependency injection for Go
 
