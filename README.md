@@ -20,13 +20,7 @@ Dependency injection for Go
 ## Http
 ```go
   defs := di.NewDefs()
-  for constructor, lifetime := range dependencies {
-    err := defs.Add(constructor, di.PerHttpRequest)
-    // if err
-  }
-  
-  combinedDefs := defs.Join(subpackage.Defs)
-  // combine, combine, ...
+  // ...
   
   resolver, err := di.NewResolver(defs)
   // if err
