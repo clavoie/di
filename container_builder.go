@@ -19,12 +19,16 @@ func NewContainerWriter() IContainerWriter {
 }
 
 type containerWriter struct {
-	deps map[reflect.Type][]reflect.Type
+	deps map[reflect.Type]*depNode
 }
 
 func (cw *containerWriter) Add(constructor interface{}, lifetime Lifetime) error {
 	constructorValue := reflect.ValueOf(constructor)
 	arg1, err := cw.verifyConstructor(constructorValue)
+
+	if err != nil {
+		return err
+	}
 
 	if lifetimes[lifetime] == false {
 		return fmt.Errorf("di: unknown lifetime: %v", lifetime)
@@ -54,7 +58,7 @@ func (cw *containerWriter) Build() (IContainer, error) {
 		}
 	}
 
-	return nil, nil
+	return newContainer(cw), nil
 }
 
 func (cw *containerWriter) join(cw2 *containerWriter) (*containerWriter, error) {
@@ -62,7 +66,7 @@ func (cw *containerWriter) join(cw2 *containerWriter) (*containerWriter, error) 
 		deps: make(map[reflect.Type]*depNode, len(cw.deps)+len(cw2.deps)),
 	}
 
-	for node := range cw.deps {
+	for _, node := range cw.deps {
 		err := cw3.Add(node.Constructor, node.Lifetime)
 
 		if err != nil {
@@ -70,7 +74,7 @@ func (cw *containerWriter) join(cw2 *containerWriter) (*containerWriter, error) 
 		}
 	}
 
-	for node := range cw2.deps {
+	for _, node := range cw2.deps {
 		err := cw3.Add(node.Constructor, node.Lifetime)
 
 		if err != nil {
@@ -82,7 +86,7 @@ func (cw *containerWriter) join(cw2 *containerWriter) (*containerWriter, error) 
 }
 
 func (cw *containerWriter) verifyConstructor(constructorValue reflect.Value) (reflect.Type, error) {
-	var arg1, arg2 reflect.Type
+	var arg1 reflect.Type
 
 	if constructorValue.Kind() != reflect.Func {
 		return arg1, fmt.Errorf("di: constructor argument is not a function: %v", constructorValue.Kind())

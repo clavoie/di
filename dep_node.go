@@ -20,17 +20,19 @@ func newDepNode(constructor reflect.Value, lifetime Lifetime) *depNode {
 
 	node.Constructor = constructor
 	node.Lifetime = lifetime
-	node.Type = constructor.Out(0)
 
-	if constructor.NumOut() == 2 {
+	constructorType := constructor.Type()
+	node.Type = constructorType.Out(0)
+
+	if constructorType.NumOut() == 2 {
 		node.ReturnsErr = true
 	}
 
-	numIn := constructor.NumIn()
+	numIn := constructorType.NumIn()
 	deps := make([]reflect.Type, numIn)
 
 	for index := range deps {
-		deps[index] = constructor.In(index)
+		deps[index] = constructorType.In(index)
 	}
 
 	node.DependsOn = deps
@@ -54,12 +56,12 @@ func (dn *depNode) CheckForCycle(seen []*depNode, checked map[*depNode]bool) err
 			if node == dn2 {
 				return true
 			}
-
-			return false
 		}
+
+		return false
 	}
 
-	for node := range dn.Edges {
+	for _, node := range dn.Edges {
 		if checked[node] {
 			continue
 		}
@@ -72,16 +74,16 @@ func (dn *depNode) CheckForCycle(seen []*depNode, checked map[*depNode]bool) err
 			}
 			path = append(path, node.Type.String())
 			pathStr := strings.Join(path, "->")
-			return nil, fmt.Errorf("di: circular dependency detected: %v", pathStr)
+			return fmt.Errorf("di: circular dependency detected: %v", pathStr)
 		}
 
 		seenCopy := make([]*depNode, len(seen), len(seen)+1)
 		copy(seenCopy, seen)
 		seenCopy = append(seenCopy, node)
-		err := node.checkForCycle(seenCopy, checked)
+		err := node.CheckForCycle(seenCopy, checked)
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
