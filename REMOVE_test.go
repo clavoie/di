@@ -35,13 +35,13 @@ func (b *bImpl) B() int { return b.b }
 
 func TestXXX(t *testing.T) {
 	cw := NewContainerWriter()
-	err := cw.Add(newA, LifetimePerDependency)
+	err := cw.Add(newA, PerDependency)
 
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	cw.Add(newB, LifetimePerDependency)
+	cw.Add(newB, PerDependency)
 
 	if err != nil {
 		t.Fatal(err)

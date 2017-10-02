@@ -53,11 +53,11 @@ func (r *resolver) Resolve(rtype reflect.Type) (reflect.Value, error) {
 
 func (r *resolver) lifetimeToCache(l Lifetime) *resolveCache {
 	switch l {
-	case LifetimeSingleton:
+	case Singleton:
 		return r.container.singletons
-	case LifetimePerHttpRequest:
+	case PerHttpRequest:
 		return r.perHttp
-	case LifetimePerResolution:
+	case PerResolution:
 		return r.perResolve
 	}
 

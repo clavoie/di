@@ -28,13 +28,13 @@ func newContainer(cw *containerWriter) *container {
 
 	for rtype, node := range cw.deps {
 		switch node.Lifetime {
-		case LifetimeSingleton:
+		case Singleton:
 			singletons.Set(rtype, newSingleton(node))
-		case LifetimePerDependency:
+		case PerDependency:
 			deps[rtype] = node
-		case LifetimePerHttpRequest:
+		case PerHttpRequest:
 			perHttp[rtype] = node
-		case LifetimePerResolution:
+		case PerResolution:
 			perResolve[rtype] = node
 		}
 	}
