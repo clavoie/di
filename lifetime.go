@@ -44,6 +44,7 @@ const (
 	PerResolution
 )
 
+// lifetimes is a collection of all known Lifetime values
 var lifetimes = map[Lifetime]bool{
 	Singleton:      true,
 	PerDependency:  true,

@@ -34,7 +34,7 @@ func newB(a IA) IB {
 func (b *bImpl) B() int { return b.b }
 
 func TestXXX(t *testing.T) {
-	cw := NewContainerWriter()
+	cw := NewDefs()
 	err := cw.Add(newA, PerDependency)
 
 	if err != nil {
@@ -47,7 +47,7 @@ func TestXXX(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	c, err := cw.Build()
+	c, err := NewResolver(cw)
 
 	if err != nil {
 		t.Fatal(err)

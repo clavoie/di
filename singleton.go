@@ -19,7 +19,7 @@ func newSingletonValue(value reflect.Value) *singleton {
 	}
 }
 
-func (s *singleton) SetValue(ins []reflect.Value) (reflect.Value, error) {
+func (s *singleton) SetValue(ins []reflect.Value, closables *[]IHttpClosable) (reflect.Value, error) {
 	value, err := s.node.NewValue(ins)
 
 	if err != nil {
@@ -27,6 +27,12 @@ func (s *singleton) SetValue(ins []reflect.Value) (reflect.Value, error) {
 	}
 
 	s.value = value
+	closable, isClosable := value.Interface().(IHttpClosable)
+
+	if isClosable {
+		*closables = append(*closables, closable)
+	}
+
 	return value, nil
 }
 
