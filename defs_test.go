@@ -61,6 +61,19 @@ func TestDefs(t *testing.T) {
 					t.Fatal(err)
 				}
 			})
+			t.Run("DuplicateDefinition", func(t *testing.T) {
+				defs := NewDefs()
+				err := defs.Add(NewA, PerResolve)
+
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				err = defs.Add(NewA, PerResolve)
+				if err == nil {
+					t.Fatal(err)
+				}
+			})
 		})
 	})
 
@@ -135,6 +148,28 @@ func TestDefs(t *testing.T) {
 			_, err = defs.build()
 			if err == nil {
 				t.Fatal("expecting circular reference err")
+			}
+		})
+		t.Run("DuplicateDefs", func(t *testing.T) {
+			defs1 := NewDefs()
+			err := defs1.Add(NewA, Singleton)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			defs2 := NewDefs()
+			err = defs2.Add(NewA, PerResolve)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			defs3 := defs1.Join(defs2)
+			_, err = defs3.build()
+
+			if err == nil {
+				t.Fatal("no deuplicate definition err")
 			}
 		})
 	})

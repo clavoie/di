@@ -61,8 +61,8 @@ func (d *Defs) all() []*depNode {
 	return deps
 }
 
-func (cw *Defs) build() (map[reflect.Type]*depNode, error) {
-	allDeps := cw.all()
+func (d *Defs) build() (map[reflect.Type]*depNode, error) {
+	allDeps := d.all()
 	finalDeps := &Defs{
 		deps: make(map[reflect.Type]*depNode, len(allDeps)),
 	}
@@ -75,7 +75,7 @@ func (cw *Defs) build() (map[reflect.Type]*depNode, error) {
 		}
 	}
 
-	checked := make(map[*depNode]bool, len(cw.deps))
+	checked := make(map[*depNode]bool, len(d.deps))
 
 	for _, node := range finalDeps.deps {
 		if checked[node] {
@@ -93,14 +93,14 @@ func (cw *Defs) build() (map[reflect.Type]*depNode, error) {
 }
 
 // Join combines two Defs collections together into a new Defs
-func (cw *Defs) Join(cw2 *Defs) *Defs {
+func (d1 *Defs) Join(d2 *Defs) *Defs {
 	return &Defs{
 		deps:   make(map[reflect.Type]*depNode),
-		joined: []*Defs{cw, cw2},
+		joined: []*Defs{d1, d2},
 	}
 }
 
-func (cw *Defs) verifyConstructor(constructorValue reflect.Value) (reflect.Type, error) {
+func (d *Defs) verifyConstructor(constructorValue reflect.Value) (reflect.Type, error) {
 	var arg1 reflect.Type
 
 	if constructorValue.Kind() != reflect.Func {
@@ -122,7 +122,7 @@ func (cw *Defs) verifyConstructor(constructorValue reflect.Value) (reflect.Type,
 		return arg1, fmt.Errorf("di: return value 1 must be an interface: %v", arg1)
 	}
 
-	_, hasDep := cw.deps[arg1]
+	_, hasDep := d.deps[arg1]
 	if hasDep {
 		return arg1, fmt.Errorf("di: a dependency for %v already exists", arg1)
 	}

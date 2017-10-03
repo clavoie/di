@@ -1,6 +1,9 @@
 package di
 
-import "reflect"
+import (
+	"net/http"
+	"reflect"
+)
 
 var aCounter = 0
 var aType = reflect.TypeOf((*A)(nil)).Elem()
@@ -53,3 +56,12 @@ func NewD(e E) D {
 func NewE(c C) E {
 	return new(struct{})
 }
+
+type DependsOnHttp interface{}
+
+func NewDependsOnHttp(http.ResponseWriter, *http.Request) DependsOnHttp { return new(struct{}) }
+
+type SubDep interface{}
+type SubDepNotFound interface{}
+
+func NewSubDepNotFound(SubDep) SubDepNotFound { return new(struct{}) }

@@ -70,7 +70,7 @@ func TestLifetime(t *testing.T) {
 		expectedA1 := aCounter + 1
 		expectedA2 := expectedA1
 
-		a1, a2, resolver := getValues(PerResolution, t)
+		a1, a2, resolver := getValues(PerResolve, t)
 
 		if a1 != expectedA1 {
 			t.Fatal(Singleton, a1, expectedA1)

@@ -39,7 +39,7 @@ func NewResolver(d *Defs) (IHttpResolver, error) {
 			deps[rtype] = node
 		case PerHttpRequest:
 			perHttp[rtype] = node
-		case PerResolution:
+		case PerResolve:
 			perResolve[rtype] = node
 		}
 	}

@@ -29,7 +29,7 @@ const (
 	// instances
 	PerHttpRequest
 
-	// PerResolution indicates that a new instance of the type should
+	// PerResolve indicates that a new instance of the type should
 	// be created per call to Resolve(), but that the same instance
 	// of the type should be used throughout the Resolve() call
 	//
@@ -41,7 +41,7 @@ const (
 	// dep1 and dep2 will be the same instance of Dep throughout the
 	// dependency chain of foo1, but dep1 & dep2 in foo1 will not be
 	// the same instance of Dep in foo2
-	PerResolution
+	PerResolve
 )
 
 // lifetimes is a collection of all known Lifetime values
@@ -49,5 +49,5 @@ var lifetimes = map[Lifetime]bool{
 	Singleton:      true,
 	PerDependency:  true,
 	PerHttpRequest: true,
-	PerResolution:  true,
+	PerResolve:     true,
 }

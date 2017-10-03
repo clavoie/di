@@ -109,6 +109,16 @@ func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
 			}
 		}
 
+		if isVariadic {
+			lastVal := callVals[numIn-1]
+			lastValLen := lastVal.Len()
+			callVals = callVals[:numIn-1]
+
+			for index := 0; index < lastValLen; index += 1 {
+				callVals = append(callVals, lastVal.Index(index))
+			}
+		}
+
 		return fnValue.Call(callVals)
 	}).Interface(), nil
 }
@@ -142,7 +152,7 @@ func (r *resolverChild) lifetimeToCache(l Lifetime) *resolveCache {
 		return r.parent.singletons
 	case PerHttpRequest:
 		return r.perHttp
-	case PerResolution:
+	case PerResolve:
 		return r.perResolve
 	}
 
