@@ -20,7 +20,7 @@ func (hi *HttpImpl) Di_HttpClose() {
 
 func NewHttpDep() HttpDep { return new(HttpImpl) }
 
-func ExampleIHttpResolver_httpHandler() {
+func NewHttpResolver() di.IHttpResolver {
 	defs := di.NewDefs()
 
 	// one instance of HttpDep created per http request
@@ -35,23 +35,31 @@ func ExampleIHttpResolver_httpHandler() {
 		panic(err)
 	}
 
-	logger := func(error) {}
-	errHandler := func(err error, w http.ResponseWriter, r *http.Request) {
-		logger(err)
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-	depHandler := func(dep HttpDep) {}
-	normalHandler := func(http.ResponseWriter, *http.Request) {}
-	urlDefs := []struct {
-		url     string
-		handler interface{}
-	}{
-		{"/", depHandler},
-		{"/thing", normalHandler},
-	}
+	return resolver
+}
 
+var resolver = NewHttpResolver()
+
+func DepHandler(dep HttpDep)                         {}
+func HttpHandler(http.ResponseWriter, *http.Request) {}
+func WriteToLog(err error)                           { /* etc */ }
+
+func ErrHandler(err error, w http.ResponseWriter, r *http.Request) {
+	WriteToLog(err)
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+var urlDefs = []struct {
+	url     string
+	handler interface{}
+}{
+	{"/", DepHandler},
+	{"/thing", HttpHandler},
+}
+
+func ExampleIHttpResolver_httpHandler() {
 	for _, urlDef := range urlDefs {
-		handleFunc, err := resolver.HttpHandler(urlDef.handler, errHandler)
+		handleFunc, err := resolver.HttpHandler(urlDef.handler, ErrHandler)
 		if err != nil {
 			panic(err)
 		}
