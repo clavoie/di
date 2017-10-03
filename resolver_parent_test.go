@@ -20,6 +20,28 @@ func (hc *HttpCloser) A() int        { return 1 }
 func (hc *HttpCloser) Di_HttpClose() { hc.isClosed = true }
 
 func TestResolverParent(t *testing.T) {
+	t.Run("NewResolver", func(t *testing.T) {
+		t.Run("InvalidDefs", func(t *testing.T) {
+			defs1 := NewDefs()
+			defs2 := NewDefs()
+			err := defs1.Add(NewA, Singleton)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = defs2.Add(NewA, Singleton)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = NewResolver(defs1.Join(defs2))
+			if err == nil {
+				t.Fatal("expecting NewResolver error")
+			}
+		})
+	})
 	t.Run("HttpHandler", func(t *testing.T) {
 		w := (http.ResponseWriter)(new(TestResponseWriter))
 		r := new(http.Request)
@@ -108,6 +130,17 @@ func TestResolverParent(t *testing.T) {
 		handlerFn(w, r)
 		if isErrHandlerCalled == false {
 			t.Fatal("err handler never called")
+		}
+	})
+	t.Run("InvalidHandler", func(t *testing.T) {
+		resolver, err := NewResolver(NewDefs())
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		_, err = resolver.HttpHandler("hello", nil)
+		if err == nil {
+			t.Fatal("expecting http handler to fail with invalid args")
 		}
 	})
 }

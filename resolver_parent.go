@@ -17,7 +17,9 @@ type resolverParent struct {
 }
 
 // NewResolver returns a new instance of IHttpResolver from
-// a collection of dependency definitions
+// a collection of dependency definitions. An IResolver definition is added
+// to the collection, and can be included as a dependency for resolved types
+// and funcs
 func NewResolver(d *Defs) (IHttpResolver, error) {
 	allDeps, err := d.build()
 
@@ -84,12 +86,17 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 			values[index] = value
 		}
 
-		fnValue.Call(values)
-
 		for _, closable := range resolver.closables {
-			closable.Di_HttpClose()
+			defer closable.Di_HttpClose()
 		}
+
+		fnValue.Call(values)
 	}, nil
+}
+
+func (c *resolverParent) Invoke(fn interface{}) error {
+	resolver := newResolverChild(c)
+	return resolver.Invoke(fn)
 }
 
 func (c *resolverParent) Resolve(ptrToIface interface{}) error {

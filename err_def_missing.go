@@ -10,6 +10,8 @@ import (
 //
 // Implements the error interface
 type ErrDefMissing struct {
+	// Type is the type of dependency for which there was no definition available
+	// in the IResolver
 	Type reflect.Type
 }
 

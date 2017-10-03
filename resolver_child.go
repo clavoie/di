@@ -6,6 +6,9 @@ import (
 	"reflect"
 )
 
+// errorType is typeof(error)
+var errorType = reflect.TypeOf((*error)(nil)).Elem()
+
 // iresolverType is typeof(IResolver)
 var iresolverType = reflect.TypeOf((*IResolver)(nil)).Elem()
 
@@ -121,6 +124,27 @@ func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
 
 		return fnValue.Call(callVals)
 	}).Interface(), nil
+}
+
+func (r *resolverChild) Invoke(fn interface{}) error {
+	newFn, err := r.Curry(fn)
+
+	if err != nil {
+		return err
+	}
+
+	fnValue := reflect.ValueOf(newFn)
+	fnType := reflect.TypeOf(newFn)
+	if fnType.NumIn() > 0 {
+		return fmt.Errorf("di: Invoke: cannot invoke a func with input parameters: %v", fnType.NumIn())
+	}
+
+	outValues := fnValue.Call([]reflect.Value{})
+	if fnType.NumOut() == 1 && fnType.Out(0) == errorType {
+		return outValues[0].Interface().(error)
+	}
+
+	return nil
 }
 
 func (r *resolverChild) Resolve(ptrToIface interface{}) error {

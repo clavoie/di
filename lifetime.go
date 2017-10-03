@@ -25,8 +25,8 @@ const (
 	//		func NewFoo(dep1, dep2 Dep) Foo
 	//
 	// if Foo is resolved in an http request dep1 and dep2 will be
-	// the exact same instance of Dep. Otherwise they will be separate
-	// instances
+	// the exact same instance of Dep. If not resolved via an http
+	// request PerHttprequest acts like PerResolve
 	PerHttpRequest
 
 	// PerResolve indicates that a new instance of the type should
@@ -37,10 +37,8 @@ const (
 	//		func NewFoo(dep1, dep2 Dep) Foo
 	//		err1 := container.Resolve(&foo1)
 	//		err2 := container.Resolve(&foo2)
-	//
-	// dep1 and dep2 will be the same instance of Dep throughout the
-	// dependency chain of foo1, but dep1 & dep2 in foo1 will not be
-	// the same instance of Dep in foo2
+	//		foo1.dep1 == foo1.dep2
+	//		foo1.dep1 != foo2.dep1
 	PerResolve
 )
 
