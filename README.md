@@ -18,14 +18,12 @@ di only resolves dependencies which are interfaces.
 
 ## Http
 ```go
-  defs := di.NewDefs()
-  // ...
-  
   resolver, err := di.NewResolver(defs)
   // if err
   
   for _, handler := range handlers {
-    // ResponseWriter and *Request are available as dependencies
+    // ResponseWriter and *Request are available as dependencies, the resolver
+    // is also available as a dependency
     // handler.fn => func(dep1 Dep1, dep2 Dep2, etc)
     httpFn, err := resolver.HttpHandler(handler.fn, errFn)
     // if err
