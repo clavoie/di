@@ -9,7 +9,7 @@ Dependency injection for Go
   - a new instance created for each dependency encountered, every time Resolve() is called
 - PerHttpRequest
   - a new instance is created for each HTTP request, and reused for the duration of the request. The dependency has an option to implement an interface which will be called back once the request is over
-- PerResolution
+- PerResolve
   - a new instance is created for each call of Resolve(), and then re-used throughout that call. Subsequent calls to Resolve() create new instances
   
 [More about lifetimes](https://godoc.org/github.com/clavoie/di#Lifetime)
