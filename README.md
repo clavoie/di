@@ -53,7 +53,7 @@ parameters the caller would like to supply themselves.
   ifunc, err := resolver.Curry(normalFunc)
   // if err
   
-  value, msg := ((func (string)(int, string))(ifunc))("hello")
+  value, msg := ifunc.(func (string)(int, string))("hello")
   // 5, "hello!"
 ```
 
