@@ -1,9 +1,6 @@
-# di ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master) [![codecov](https://codecov.io/gh/clavoie/di/branch/master/graph/badge.svg)](https://codecov.io/gh/clavoie/di) [![Go Report Card](https://goreportcard.com/badge/github.com/clavoie/di)](https://goreportcard.com/report/github.com/clavoie/di)
+# di [![GoDoc Reference](https://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://godoc.org/github.com/clavoie/di) ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master) [![codecov](https://codecov.io/gh/clavoie/di/branch/master/graph/badge.svg)](https://codecov.io/gh/clavoie/di) [![Go Report Card](https://goreportcard.com/badge/github.com/clavoie/di)](https://goreportcard.com/report/github.com/clavoie/di)
 
 Dependency injection for Go
-
-## Docs
-[GoDoc](https://godoc.org/github.com/clavoie/di)
 
 ## Dependency Lifetimes
 - Singleton
