@@ -68,7 +68,8 @@ If the func returns an error, and no error is encountered while resolving the de
 
 ```go
   err := resolver.Invoke(func (dep Dep) error {
-     err := dep1.Do()
-     return err
+     innerErr := dep1.Do()
+     return innerErr
   })
+  // err == innerErr
 ```
