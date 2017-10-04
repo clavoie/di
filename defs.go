@@ -46,10 +46,8 @@ func NewDefs() *Defs {
 	}
 }
 
-// Add adds a dependency definition to this Defs collection. The
-// supplied constructor must have at least 1 return value,
-// the first of which is an interface. The optional second return
-// value may be an error
+// Add adds a dependency definition to this Defs collection. See Def.Constructor
+// for the format of the constructor parameter
 func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
 	constructorValue := reflect.ValueOf(constructor)
 	arg1, err := d.verifyConstructor(constructorValue)
@@ -130,10 +128,10 @@ func (d *Defs) build() (map[reflect.Type]*depNode, error) {
 }
 
 // Join combines two Defs collections together into a new Defs
-func (d1 *Defs) Join(d2 *Defs) *Defs {
+func Join(ds ...*Defs) *Defs {
 	return &Defs{
 		deps:   make(map[reflect.Type]*depNode),
-		joined: []*Defs{d1, d2},
+		joined: ds,
 	}
 }
 

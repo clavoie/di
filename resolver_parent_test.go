@@ -36,7 +36,7 @@ func TestResolverParent(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			_, err = NewResolver(defs1.Join(defs2))
+			_, err = NewResolver(Join(defs1, defs2))
 			if err == nil {
 				t.Fatal("expecting NewResolver error")
 			}
