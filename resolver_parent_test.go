@@ -30,7 +30,7 @@ func TestResolverParent(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			err = defs2.Add(NewA, Singleton)
+			err = defs2.Add(NewA, PerResolve)
 
 			if err != nil {
 				t.Fatal(err)

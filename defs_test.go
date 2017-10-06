@@ -4,6 +4,19 @@ import "testing"
 
 func TestDefs(t *testing.T) {
 	t.Run("Add", func(t *testing.T) {
+		t.Run("Duplicate_NoErr", func(t *testing.T) {
+			defs := NewDefs()
+			err := defs.Add(NewA, PerResolve)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = defs.Add(NewA, PerResolve)
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
 		t.Run("Invalid", func(t *testing.T) {
 			t.Run("NotFn", func(t *testing.T) {
 				defs := NewDefs()
@@ -69,9 +82,27 @@ func TestDefs(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				err = defs.Add(NewA, PerResolve)
+				dupeA := func() A {
+					aCounter += 1
+					return &aImpl{aCounter}
+				}
+
+				err = defs.Add(dupeA, PerResolve)
 				if err == nil {
+					t.Fatal("was expecting duplicate definition to fail")
+				}
+			})
+			t.Run("DifferentLifetime", func(t *testing.T) {
+				defs := NewDefs()
+				err := defs.Add(NewA, PerResolve)
+
+				if err != nil {
 					t.Fatal(err)
+				}
+
+				err = defs.Add(NewA, Singleton)
+				if err == nil {
+					t.Fatal("was expecting duplicate lifetime to fail")
 				}
 			})
 		})

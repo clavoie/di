@@ -1,9 +1,15 @@
 package di
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
+
+// duplicateDefErr is returned from verifyConstructor when a duplicate
+// dependency definition is found. It signals Add to skip adding the
+// definition to the Defs collection as it already exists
+var duplicateDefErr = errors.New("di: duplicate definition")
 
 // errType is the typeof(error)
 var errType = reflect.TypeOf((*error)(nil)).Elem()
@@ -50,9 +56,13 @@ func NewDefs() *Defs {
 // for the format of the constructor parameter
 func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
 	constructorValue := reflect.ValueOf(constructor)
-	arg1, err := d.verifyConstructor(constructorValue)
+	arg1, err := d.verifyConstructor(constructorValue, lifetime)
 
 	if err != nil {
+		if err == duplicateDefErr {
+			return nil
+		}
+
 		return err
 	}
 
@@ -135,7 +145,7 @@ func Join(ds ...*Defs) *Defs {
 	}
 }
 
-func (d *Defs) verifyConstructor(constructorValue reflect.Value) (reflect.Type, error) {
+func (d *Defs) verifyConstructor(constructorValue reflect.Value, lifetime Lifetime) (reflect.Type, error) {
 	var arg1 reflect.Type
 
 	if constructorValue.Kind() != reflect.Func {
@@ -157,9 +167,19 @@ func (d *Defs) verifyConstructor(constructorValue reflect.Value) (reflect.Type, 
 		return arg1, fmt.Errorf("di: return value 1 must be an interface: %v", arg1)
 	}
 
-	_, hasDep := d.deps[arg1]
+	existingDep, hasDep := d.deps[arg1]
 	if hasDep {
-		return arg1, fmt.Errorf("di: a dependency for %v already exists", arg1)
+		existing := fmt.Sprintf("%#v", existingDep.Constructor)
+		newConstructor := fmt.Sprintf("%#v", constructorValue)
+		if existing != newConstructor {
+			return arg1, fmt.Errorf("di: a dependency for %v already exists with a different constructor:  %v, %v", arg1, existing, newConstructor)
+		}
+
+		if existingDep.Lifetime != lifetime {
+			return arg1, fmt.Errorf("di: a dependency for %v already exists with a different lifetime: %v, %v", arg1, existingDep.Lifetime, lifetime)
+		}
+
+		return arg1, duplicateDefErr
 	}
 
 	if numOut == 2 {
