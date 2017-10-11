@@ -22,8 +22,8 @@ di only resolves dependencies which are interfaces, the resolver itself, http.Re
   // if err
   
   for _, handler := range handlers {
-    // ResponseWriter and *Request are available as dependencies, the resolver
-    // is also available as a dependency
+    // the http.ResponseWriter and *http.Request values are available as dependencies, 
+    // the resolver is also available as a dependency as an di.IResolver
     // handler.fn => func(dep1 Dep1, dep2 Dep2, etc)
     httpFn, err := resolver.HttpHandler(handler.fn, errFn)
     // if err
