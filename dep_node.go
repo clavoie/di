@@ -109,7 +109,11 @@ func (dn *depNode) NewValue(ins []reflect.Value) (reflect.Value, error) {
 
 	var err error
 	if dn.ReturnsErr {
-		err = outs[1].Interface().(error)
+		val := outs[1].Interface()
+
+		if val != nil {
+			err = val.(error)
+		}
 	}
 
 	return outs[0], err

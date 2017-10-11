@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 )
 
 type TestResponseWriter struct{}
@@ -18,6 +19,12 @@ type HttpCloser struct {
 
 func (hc *HttpCloser) A() int        { return 1 }
 func (hc *HttpCloser) Di_HttpClose() { hc.isClosed = true }
+
+type Logger struct {
+	isCalled bool
+}
+
+func (l *Logger) HttpDuration(time.Duration) { l.isCalled = true }
 
 func TestResolverParent(t *testing.T) {
 	t.Run("NewResolver", func(t *testing.T) {
@@ -58,6 +65,13 @@ func TestResolverParent(t *testing.T) {
 			t.Fatal(err)
 		}
 
+		logger := new(Logger)
+		err = defs.Add(func() ILogger { return logger }, PerHttpRequest)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		resolver, err := NewResolver(defs)
 		if err != nil {
 			t.Fatal(err)
@@ -89,6 +103,10 @@ func TestResolverParent(t *testing.T) {
 		handlerFn(w, r)
 		if closer1.isClosed == false {
 			t.Fatal("dependency not closed")
+		}
+
+		if logger.isCalled == false {
+			t.Fatal("logger not called")
 		}
 
 		var closer2 HttpCloser

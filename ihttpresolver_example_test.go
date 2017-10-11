@@ -1,7 +1,9 @@
 package di_test
 
 import (
+	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/clavoie/di"
 )
@@ -20,11 +22,23 @@ func (hi *HttpImpl) Di_HttpClose() {
 
 func NewHttpDep() HttpDep { return new(HttpImpl) }
 
+// PrintLogger is an implementation of di.ILogger
+type PrintLogger struct{}
+
+func NewILogger() di.ILogger { return new(PrintLogger) }
+
+func (pl *PrintLogger) HttpDuration(resolveDuration time.Duration) {
+	fmt.Println("time to resolve is: ", resolveDuration)
+}
+
+var deps = []*di.Def{
+	di.NewDef(NewHttpDep, di.PerHttpRequest),
+	di.NewDef(NewILogger, di.Singleton),
+}
+
 func NewHttpResolver() di.IHttpResolver {
 	defs := di.NewDefs()
-
-	// one instance of HttpDep created per http request
-	err := defs.Add(NewHttpDep, di.PerHttpRequest)
+	err := defs.AddAll(deps)
 
 	if err != nil {
 		panic(err)

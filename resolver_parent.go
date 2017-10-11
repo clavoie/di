@@ -3,7 +3,11 @@ package di
 import (
 	"net/http"
 	"reflect"
+	"time"
 )
+
+// iloggerType is typeof(ILogger)
+var iloggerType = reflect.TypeOf((*ILogger)(nil)).Elem()
 
 // resolverParent is a type which contains all the combined
 // dependency definitions, and created new resolverChild
@@ -11,6 +15,7 @@ import (
 type resolverParent struct {
 	allDeps    map[reflect.Type]*depNode
 	deps       map[reflect.Type]*depNode
+	hasLogger  bool
 	perHttp    map[reflect.Type]*depNode
 	perResolve map[reflect.Type]*depNode
 	singletons *resolveCache
@@ -29,11 +34,16 @@ func NewResolver(d *Defs) (IHttpResolver, error) {
 
 	numDeps := len(allDeps)
 	deps := make(map[reflect.Type]*depNode, numDeps/4)
+	hasLogger := false
 	perHttp := make(map[reflect.Type]*depNode, numDeps/4)
 	perResolve := make(map[reflect.Type]*depNode, numDeps/4)
 	singletons := newResolveCache()
 
 	for rtype, node := range allDeps {
+		if rtype == iloggerType {
+			hasLogger = true
+		}
+
 		switch node.Lifetime {
 		case Singleton:
 			singletons.Set(rtype, newSingleton(node))
@@ -49,6 +59,7 @@ func NewResolver(d *Defs) (IHttpResolver, error) {
 	return &resolverParent{
 		allDeps:    allDeps,
 		deps:       deps,
+		hasLogger:  hasLogger,
 		perHttp:    perHttp,
 		perResolve: perResolve,
 		singletons: singletons,
@@ -72,6 +83,12 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 	numIn := fnType.NumIn()
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		var epoch time.Time
+
+		if c.hasLogger {
+			epoch = time.Now()
+		}
+
 		resolver := newHttpResolverChild(c, w, r)
 		values := make([]reflect.Value, numIn)
 
@@ -88,6 +105,18 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 
 		for _, closable := range resolver.closables {
 			defer closable.Di_HttpClose()
+		}
+
+		if c.hasLogger {
+			var logger ILogger
+			err := resolver.Resolve(&logger)
+
+			if err != nil {
+				errFn(err, w, r)
+				return
+			}
+
+			logger.HttpDuration(time.Since(epoch))
 		}
 
 		fnValue.Call(values)
