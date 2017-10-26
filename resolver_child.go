@@ -79,7 +79,7 @@ func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
 		value, err := r.resolveCache(inType)
 
 		if err != nil {
-			_, isErrDefMissing := err.(ErrDefMissing)
+			_, isErrDefMissing := err.(*ErrDefMissing)
 
 			if isErrDefMissing {
 				callTypes = append(callTypes, inType)

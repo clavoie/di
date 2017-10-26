@@ -96,6 +96,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 			value, err := resolver.resolveCache(fnType.In(index))
 
 			if err != nil {
+				err = newErrDefMissingWrapper(err, fnType.In(index))
 				errFn(err, w, r)
 				return
 			}
