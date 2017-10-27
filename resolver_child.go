@@ -53,12 +53,12 @@ func newHttpResolverChild(c *resolverParent, w http.ResponseWriter, r *http.Requ
 	return resolver
 }
 
-func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
+func (r *resolverChild) Curry(fn interface{}) (interface{}, *ErrResolve) {
 	fnValue := reflect.ValueOf(fn)
 	err := verifyFn(fnValue)
 
 	if err != nil {
-		return nil, err
+		return nil, newErrResolve(nil, err, reflect.TypeOf(fn))
 	}
 
 	fnType := fnValue.Type()
@@ -76,10 +76,10 @@ func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
 			continue
 		}
 
-		value, err := r.resolveCache(inType)
+		value, err := r.resolveUsingCache(nil, inType)
 
 		if err != nil {
-			_, isErrDefMissing := err.(*ErrDefMissing)
+			_, isErrDefMissing := err.Err.(*ErrDefMissing)
 
 			if isErrDefMissing {
 				callTypes = append(callTypes, inType)
@@ -126,7 +126,7 @@ func (r *resolverChild) Curry(fn interface{}) (interface{}, error) {
 	}).Interface(), nil
 }
 
-func (r *resolverChild) Invoke(fn interface{}) error {
+func (r *resolverChild) Invoke(fn interface{}) *ErrResolve {
 	newFn, err := r.Curry(fn)
 
 	if err != nil {
@@ -136,29 +136,29 @@ func (r *resolverChild) Invoke(fn interface{}) error {
 	fnValue := reflect.ValueOf(newFn)
 	fnType := reflect.TypeOf(newFn)
 	if fnType.NumIn() > 0 {
-		return fmt.Errorf("di: Invoke: cannot invoke a func with input parameters: %v", fnType.NumIn())
+		return newErrResolve(nil, fmt.Errorf("di: Invoke: cannot invoke a func with input parameters: %v", fnType.NumIn()), fnType)
 	}
 
 	outValues := fnValue.Call([]reflect.Value{})
 	if fnType.NumOut() == 1 && fnType.Out(0) == errorType {
-		return outValues[0].Interface().(error)
+		return newErrResolve(nil, outValues[0].Interface().(error), fnType)
 	}
 
 	return nil
 }
 
-func (r *resolverChild) Resolve(ptrToIface interface{}) error {
+func (r *resolverChild) Resolve(ptrToIface interface{}) *ErrResolve {
 	ptrValue := reflect.ValueOf(ptrToIface)
 	if ptrValue.Kind() != reflect.Ptr {
-		return fmt.Errorf("di: ptrToIFace must be a *Interface type: %v", ptrValue.Type())
+		return newErrResolve(nil, fmt.Errorf("di: ptrToIFace must be a *Interface type: %v", ptrValue.Type()), ptrValue.Type())
 	}
 
 	ifaceType := ptrValue.Type().Elem()
 	if ifaceType.Kind() != reflect.Interface {
-		return fmt.Errorf("di: ptrToIFace must be a *Interface type: %v", ptrValue.Type())
+		return newErrResolve(nil, fmt.Errorf("di: ptrToIFace must be a *Interface type: %v", ptrValue.Type()), ptrValue.Type())
 	}
 
-	value, err := r.resolveCache(ifaceType)
+	value, err := r.resolveUsingCache(nil, ifaceType)
 
 	if err != nil {
 		return err
@@ -183,10 +183,10 @@ func (r *resolverChild) lifetimeToCache(l Lifetime) *resolveCache {
 	return resolverNoCache
 }
 
-// resolveCache attempts to resolve a value for a type using this
+// resolveUsingCache attempts to resolve a value for a type using this
 // resolver's cache. ErrDefMissing is returned if there is no
 // definition in this resolver for the specified type
-func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) {
+func (r *resolverChild) resolveUsingCache(depChain []reflect.Type, rtype reflect.Type) (reflect.Value, *ErrResolve) {
 	if rtype == iresolverType {
 		return reflect.ValueOf(r), nil
 	}
@@ -195,12 +195,12 @@ func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) 
 		httpValue, hasValue := r.perHttp.Get(rtype)
 
 		if hasValue == false {
-			return reflect.Value{}, newErrDefMissing(rtype)
+			return reflect.Value{}, newErrResolve(depChain, newErrDefMissing(rtype), rtype)
 		}
 
 		value, hasValue := httpValue.Value()
 		if hasValue == false {
-			return reflect.Value{}, newErrDefMissing(rtype)
+			return reflect.Value{}, newErrResolve(depChain, newErrDefMissing(rtype), rtype)
 		}
 
 		return value, nil
@@ -208,7 +208,7 @@ func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) 
 
 	dep, hasDep := r.parent.allDeps[rtype]
 	if hasDep == false {
-		return reflect.Value{}, newErrDefMissing(rtype)
+		return reflect.Value{}, newErrResolve(depChain, newErrDefMissing(rtype), rtype)
 	}
 
 	cache := r.lifetimeToCache(dep.Lifetime)
@@ -223,20 +223,27 @@ func (r *resolverChild) resolveCache(rtype reflect.Type) (reflect.Value, error) 
 		return value, nil
 	}
 
-	return r.resolveNoCache(dep, cacheValue)
+	return r.resolveIgnoringCache(depChain, dep, cacheValue)
 }
 
-// resolveNoCache is called on a resolve cache miss. It attempts to
+// resolveIgnoringCache is called on a resolve cache miss. It attempts to
 // resolve the missing type, and set the cache of the type which is
 // missing with the instantiated value
-func (r *resolverChild) resolveNoCache(node *depNode, s *singleton) (reflect.Value, error) {
+func (r *resolverChild) resolveIgnoringCache(depChain []reflect.Type, node *depNode, s *singleton) (reflect.Value, *ErrResolve) {
 	if node.IsLeaf() {
-		return s.SetValue([]reflect.Value{}, &r.closables)
+		value, err := s.SetValue([]reflect.Value{}, &r.closables)
+
+		if err != nil {
+			return reflect.Value{}, newErrResolve(depChain, err, node.Type)
+		}
+
+		return value, nil
 	}
 
 	values := make([]reflect.Value, len(node.DependsOn))
+	childDepChain := append(depChain, node.Type)
 	for index, dep := range node.DependsOn {
-		value, err := r.resolveCache(dep)
+		value, err := r.resolveUsingCache(childDepChain, dep)
 
 		if err != nil {
 			return reflect.Value{}, err
@@ -245,5 +252,10 @@ func (r *resolverChild) resolveNoCache(node *depNode, s *singleton) (reflect.Val
 		values[index] = value
 	}
 
-	return s.SetValue(values, &r.closables)
+	value, err := s.SetValue(values, &r.closables)
+	if err != nil {
+		return reflect.Value{}, newErrResolve(depChain, err, node.Type)
+	}
+
+	return value, nil
 }

@@ -10,30 +10,18 @@ import (
 //
 // Implements the error interface
 type ErrDefMissing struct {
-	innerErr error
-	// Type is the type of dependency for which there was no
-	// definition available in the IResolver
+	// Type is the type of dependency which could not be resolved
 	Type reflect.Type
 }
 
+// newErrDefMissing creates and returns a new ErrDefMissing struct
 func newErrDefMissing(t reflect.Type) *ErrDefMissing {
 	return &ErrDefMissing{
-		innerErr: nil,
-		Type:     t,
+		Type: t,
 	}
 }
 
-func newErrDefMissingWrapper(innerErr error, t reflect.Type) *ErrDefMissing {
-	return &ErrDefMissing{
-		innerErr: innerErr,
-		Type:     t,
-	}
-}
-
+// Error returns an error string describing the error encountered
 func (edm *ErrDefMissing) Error() string {
-	if edm.innerErr == nil {
-		return fmt.Sprintf("di: no definition found for %v in container", edm.Type)
-	}
-
-	return fmt.Sprintf("di: err resolving %v: %v", edm.Type, edm.innerErr)
+	return fmt.Sprintf("di: definition missing for type: %v", edm.Type)
 }

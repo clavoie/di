@@ -33,10 +33,10 @@ func TestResolverChild(t *testing.T) {
 
 		child := newResolverChild(parent)
 		var self IResolver
-		err = child.Resolve(&self)
+		resolveErr := child.Resolve(&self)
 
-		if err != nil {
-			t.Fatal(err)
+		if resolveErr != nil {
+			t.Fatal(resolveErr)
 		}
 
 		if child != self {

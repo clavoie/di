@@ -24,10 +24,10 @@ func TestLifetime(t *testing.T) {
 		}
 
 		var b B
-		err = resolver.Resolve(&b)
+		resolveErr := resolver.Resolve(&b)
 
-		if err != nil {
-			t.Fatal(err)
+		if resolveErr != nil {
+			t.Fatal(resolveErr)
 		}
 
 		a1, a2 := b.B()

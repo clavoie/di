@@ -58,9 +58,9 @@ func ExampleLifetime() {
 	}
 
 	var dependent Dependent
-	err = resolver.Resolve(&dependent)
-	if err != nil {
-		panic(err)
+	resolveErr := resolver.Resolve(&dependent)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	// first resolution
@@ -69,9 +69,9 @@ func ExampleLifetime() {
 	fmt.Println(impl.D1 == impl.D2, impl.D1.Value(), impl.D2.Value())
 	fmt.Println(impl.R1 == impl.R2, impl.R1.Value(), impl.R2.Value())
 
-	err = resolver.Resolve(&dependent)
-	if err != nil {
-		panic(err)
+	resolveErr = resolver.Resolve(&dependent)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	impl2 := dependent.(*DependentImpl)
