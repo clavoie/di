@@ -38,7 +38,7 @@ di can resolve a dependency directly if known. The dependency instance follows t
 resolver
 ```go
   var someDependency Dependency
-  err := resolver.Resolve(&someDependency)
+  resolveErr := resolver.Resolve(&someDependency)
 ```
 
 ## Curry Funcs
@@ -50,8 +50,8 @@ parameters the caller would like to supply themselves.
     return dep.DoThing(name), name + "!"
   }
   
-  ifunc, err := resolver.Curry(normalFunc)
-  // if err
+  ifunc, resolveErr := resolver.Curry(normalFunc)
+  // if resolveErr
   
   value, msg := ifunc.(func (string)(int, string))("hello")
   // 5, "hello!"
@@ -59,7 +59,7 @@ parameters the caller would like to supply themselves.
 
 ## Invoke
 ```go
-  err := resolver.Invoke(func (dep Dep){
+  resolveErr := resolver.Invoke(func (dep Dep){
     // do()
   })
 ```
@@ -67,9 +67,9 @@ parameters the caller would like to supply themselves.
 If the func returns an error, and no error is encountered while resolving the dependencies, that error is returned instead
 
 ```go
-  err := resolver.Invoke(func (dep Dep) error {
+  resolveErr := resolver.Invoke(func (dep Dep) error {
      innerErr := dep1.Do()
      return innerErr
   })
-  // err == innerErr
+  // resolveErr.Err == innerErr
 ```
