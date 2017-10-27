@@ -42,7 +42,7 @@ func (er *ErrResolve) String() string {
 	depNames := make([]string, len(chain))
 
 	for index, dep := range chain {
-		depNames[index] = dep.Name()
+		depNames[index] = dep.String()
 	}
 
 	depPath := strings.Join(depNames, " => ")

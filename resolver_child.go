@@ -141,7 +141,11 @@ func (r *resolverChild) Invoke(fn interface{}) *ErrResolve {
 
 	outValues := fnValue.Call([]reflect.Value{})
 	if fnType.NumOut() == 1 && fnType.Out(0) == errorType {
-		return newErrResolve(nil, outValues[0].Interface().(error), fnType)
+		errVal := outValues[0].Interface()
+
+		if errVal != nil {
+			return newErrResolve(nil, errVal.(error), fnType)
+		}
 	}
 
 	return nil
