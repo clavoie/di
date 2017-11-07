@@ -33,10 +33,10 @@ func TestResolverChild(t *testing.T) {
 
 		child := newResolverChild(parent)
 		var self IResolver
-		err = child.Resolve(&self)
+		resolveErr := child.Resolve(&self)
 
-		if err != nil {
-			t.Fatal(err)
+		if resolveErr != nil {
+			t.Fatal(resolveErr)
 		}
 
 		if child != self {
@@ -180,6 +180,43 @@ func TestResolverChild(t *testing.T) {
 			s, _ = newFn(",")
 			if s != "" {
 				t.Fatal(s)
+			}
+		})
+	})
+	t.Run("Invoke", func(t *testing.T) {
+		deps := NewDefs()
+		err := deps.Add(NewA, PerDependency)
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		resolver, err := NewResolver(deps)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Run("InvalidType", func(t *testing.T) {
+			resolveErr := resolver.Invoke("hello")
+
+			if resolveErr == nil {
+				t.Fatal("expecting err")
+			}
+		})
+
+		t.Run("InputParams", func(t *testing.T) {
+			resolveErr := resolver.Invoke(func(s string) {})
+
+			if resolveErr == nil {
+				t.Fatal("expecting err")
+			}
+		})
+
+		t.Run("ErrNil_NoErrResolve", func(t *testing.T) {
+			resolveErr := resolver.Invoke(func() error { return nil })
+
+			if resolveErr != nil {
+				t.Fatal(resolveErr)
 			}
 		})
 	})

@@ -66,12 +66,12 @@ func NewResolver(d *Defs) (IHttpResolver, error) {
 	}, nil
 }
 
-func (c *resolverParent) Curry(fn interface{}) (interface{}, error) {
+func (c *resolverParent) Curry(fn interface{}) (interface{}, *ErrResolve) {
 	resolver := newResolverChild(c)
 	return resolver.Curry(fn)
 }
 
-func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.ResponseWriter, *http.Request)) (func(http.ResponseWriter, *http.Request), error) {
+func (c *resolverParent) HttpHandler(fn interface{}, errFn func(*ErrResolve, http.ResponseWriter, *http.Request)) (func(http.ResponseWriter, *http.Request), error) {
 	fnValue := reflect.ValueOf(fn)
 	err := verifyFn(fnValue)
 
@@ -93,7 +93,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 		values := make([]reflect.Value, numIn)
 
 		for index := range values {
-			value, err := resolver.resolveCache(fnType.In(index))
+			value, err := resolver.resolveUsingCache(nil, fnType.In(index))
 
 			if err != nil {
 				errFn(err, w, r)
@@ -124,12 +124,12 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 	}, nil
 }
 
-func (c *resolverParent) Invoke(fn interface{}) error {
+func (c *resolverParent) Invoke(fn interface{}) *ErrResolve {
 	resolver := newResolverChild(c)
 	return resolver.Invoke(fn)
 }
 
-func (c *resolverParent) Resolve(ptrToIface interface{}) error {
+func (c *resolverParent) Resolve(ptrToIface interface{}) *ErrResolve {
 	resolver := newResolverChild(c)
 	return resolver.Resolve(ptrToIface)
 }

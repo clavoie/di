@@ -56,9 +56,9 @@ var resolver = NewHttpResolver()
 
 func DepHandler(dep HttpDep)                         {}
 func HttpHandler(http.ResponseWriter, *http.Request) {}
-func WriteToLog(err error)                           { /* etc */ }
+func WriteToLog(resolveErr *di.ErrResolve)           { /* etc */ }
 
-func ErrHandler(err error, w http.ResponseWriter, r *http.Request) {
+func ErrHandler(err *di.ErrResolve, w http.ResponseWriter, r *http.Request) {
 	WriteToLog(err)
 	w.WriteHeader(http.StatusInternalServerError)
 }

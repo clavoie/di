@@ -23,9 +23,9 @@ func ExampleIResolver_curry() {
 		return fmt.Sprintf("%v:%v %v", msg, reflect.TypeOf(dep), dep == nil)
 	}
 
-	ifn, err := resolver.Curry(fn)
-	if err != nil {
-		panic(err)
+	ifn, resolveErr := resolver.Curry(fn)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	var newFn func(string) string
@@ -49,21 +49,21 @@ func ExampleIResolver_invoke() {
 		panic(err)
 	}
 
-	err = resolver.Invoke(func(dep Dep) {
+	resolveErr := resolver.Invoke(func(dep Dep) {
 		fmt.Println(reflect.TypeOf(dep))
-		// Output: *struct {}
 	})
 
-	if err != nil {
-		panic(err)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	myErr := fmt.Errorf("my error")
-	err = resolver.Invoke(func(dep Dep) error { return myErr })
+	resolveErr = resolver.Invoke(func(dep Dep) error { return myErr })
 
-	if err != myErr {
+	if resolveErr.Err != myErr {
 		panic(myErr)
 	}
+	// Output: *struct {}
 }
 
 func ExampleIResolver_resolve() {
@@ -81,17 +81,17 @@ func ExampleIResolver_resolve() {
 	}
 
 	var dep Dep
-	err = resolver.Resolve(&dep)
-	if err != nil {
-		panic(err)
+	resolveErr := resolver.Resolve(&dep)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	fmt.Println(dep == nil, reflect.TypeOf(dep))
 
 	var resolver2 IResolver
-	err = resolver.Resolve(&resolver2)
-	if err != nil {
-		panic(err)
+	resolveErr = resolver.Resolve(&resolver2)
+	if resolveErr != nil {
+		panic(resolveErr)
 	}
 
 	fmt.Println(resolver2 == nil)

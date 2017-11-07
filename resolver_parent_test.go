@@ -77,7 +77,7 @@ func TestResolverParent(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		errHandler := func(err error, w http.ResponseWriter, r *http.Request) {
+		errHandler := func(err *ErrResolve, w http.ResponseWriter, r *http.Request) {
 			t.Fatal(err)
 		}
 
@@ -134,7 +134,7 @@ func TestResolverParent(t *testing.T) {
 		}
 
 		isErrHandlerCalled := false
-		errHandler := func(err error, w http.ResponseWriter, r *http.Request) {
+		errHandler := func(err *ErrResolve, w http.ResponseWriter, r *http.Request) {
 			isErrHandlerCalled = true
 		}
 

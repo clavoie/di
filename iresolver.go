@@ -12,19 +12,26 @@ type IResolver interface {
 	//   curryFoo, err := container.Curry(foo)
 	//   if err { ... }
 	//   val := curryFoo.(func(int) int)(4)
-	Curry(fn interface{}) (interface{}, error)
+	Curry(fn interface{}) (interface{}, *ErrResolve)
 
-	// Invoke resolves all known dependencies of func fn, and then attempts to execute the func.
-	// If an error is encountered while resolving the dependencies of fn an error is returned.
-	// If fn can be resolved and fn returns a single value which is an error, that is returned.
+	// Invoke resolves all known dependencies of func fn, and then
+	// attempts to execute the func.
+	//
+	// If an error is encountered while resolving the dependencies of
+	// fn an *ErrResolve is returned.
+	//
+	// If fn can be resolved and fn returns a single value which
+	// is an error, that is returned inside ErrResolve.Err
+	//
 	// Otherwise nil is returned
-	Invoke(fn interface{}) error
+	Invoke(fn interface{}) *ErrResolve
 
-	// Resolve attempts to resolve a known dependency. The parameter must be a pointer to an interface
+	// Resolve attempts to resolve a known dependency. The parameter
+	// must be a pointer to an interface
 	// type known to the resolver
 	//
 	// Example:
 	//   var dep Dep
 	//   err := container.Resolve(&dep)
-	Resolve(ptrToIface interface{}) error
+	Resolve(ptrToIface interface{}) *ErrResolve
 }
