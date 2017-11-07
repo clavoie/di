@@ -108,6 +108,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 		}
 
 		if c.hasLogger {
+			duration := time.Since(epoch)
 			var logger ILogger
 			err := resolver.Resolve(&logger)
 
@@ -116,7 +117,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(error, http.Resp
 				return
 			}
 
-			logger.HttpDuration(time.Since(epoch))
+			logger.HttpDuration(duration)
 		}
 
 		fnValue.Call(values)
