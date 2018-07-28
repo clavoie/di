@@ -5,7 +5,7 @@ import "testing"
 func TestDefs(t *testing.T) {
 	t.Run("Add", func(t *testing.T) {
 		t.Run("Duplicate_NoErr", func(t *testing.T) {
-			defs := NewDefs()
+			defs := newDefCollection()
 			err := defs.Add(NewA, PerResolve)
 
 			if err != nil {
@@ -19,7 +19,7 @@ func TestDefs(t *testing.T) {
 		})
 		t.Run("Invalid", func(t *testing.T) {
 			t.Run("NotFn", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add("invalid", Singleton)
 
 				if err == nil {
@@ -27,7 +27,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("NoOut", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() {}, Singleton)
 
 				if err == nil {
@@ -35,7 +35,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("TooManyOut", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() (int, int, int) { return 1, 2, 3 }, Singleton)
 
 				if err == nil {
@@ -43,7 +43,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("Out1IsErr", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() error { return nil }, Singleton)
 
 				if err == nil {
@@ -51,7 +51,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("Out1IsNotIface", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() int { return 0 }, Singleton)
 
 				if err == nil {
@@ -59,7 +59,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("Out2IsNotErr", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() (B, int) { return nil, 4 }, Singleton)
 
 				if err == nil {
@@ -67,7 +67,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("Lifetime", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(func() B { return nil }, (Lifetime)(-1))
 
 				if err == nil {
@@ -75,7 +75,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("DuplicateDefinition", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(NewA, PerResolve)
 
 				if err != nil {
@@ -93,7 +93,7 @@ func TestDefs(t *testing.T) {
 				}
 			})
 			t.Run("DifferentLifetime", func(t *testing.T) {
-				defs := NewDefs()
+				defs := newDefCollection()
 				err := defs.Add(NewA, PerResolve)
 
 				if err != nil {
@@ -109,14 +109,14 @@ func TestDefs(t *testing.T) {
 	})
 
 	t.Run("Join", func(t *testing.T) {
-		defs1 := NewDefs()
+		defs1 := newDefCollection()
 		err := defs1.Add(NewA, Singleton)
 
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		defs2 := NewDefs()
+		defs2 := newDefCollection()
 		err = defs2.Add(NewB, Singleton)
 
 		if err != nil {
@@ -159,7 +159,7 @@ func TestDefs(t *testing.T) {
 
 	t.Run("build", func(t *testing.T) {
 		t.Run("cycle", func(t *testing.T) {
-			defs := NewDefs()
+			defs := newDefCollection()
 			err := defs.Add(NewC, Singleton)
 
 			if err != nil {
@@ -182,14 +182,14 @@ func TestDefs(t *testing.T) {
 			}
 		})
 		t.Run("DuplicateDefs", func(t *testing.T) {
-			defs1 := NewDefs()
+			defs1 := newDefCollection()
 			err := defs1.Add(NewA, Singleton)
 
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			defs2 := NewDefs()
+			defs2 := newDefCollection()
 			err = defs2.Add(NewA, PerResolve)
 
 			if err != nil {

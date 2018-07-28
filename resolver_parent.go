@@ -34,7 +34,7 @@ type resolverParent struct {
 // while resolving one of the dependencies when an injected handler is
 // invoked by an http request.
 func NewResolver(errFn func(*ErrResolve, http.ResponseWriter, *http.Request), defs ...[]*Def) (IHttpResolver, error) {
-	d := NewDefs()
+	d := newDefCollection()
 	for _, def := range defs {
 		err := d.AddAll(def)
 

@@ -7,19 +7,6 @@ import (
 
 func TestLifetime(t *testing.T) {
 	getValues := func(l Lifetime, t *testing.T) (int, int, IResolver) {
-		defs := NewDefs()
-		err := defs.Add(NewA, l)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = defs.Add(NewB, PerDependency)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		resolver, err := NewResolver(func(er *ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }, []*Def{
 			&Def{NewA, l}, &Def{NewB, PerDependency},
 		})
