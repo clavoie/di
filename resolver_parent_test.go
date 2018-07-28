@@ -38,6 +38,13 @@ func TestResolverParent(t *testing.T) {
 				t.Fatal("expecting NewResolver error")
 			}
 		})
+		t.Run("InvalidErrFn", func(t *testing.T) {
+			_, err := NewResolver(nil, []*Def{})
+
+			if err == nil {
+				t.Fatal("expecting NewResolver error")
+			}
+		})
 	})
 	t.Run("HttpHandler", func(t *testing.T) {
 		w := (http.ResponseWriter)(new(TestResponseWriter))
@@ -132,5 +139,37 @@ func TestResolverParent(t *testing.T) {
 		if err == nil {
 			t.Fatal("expecting http handler to fail with invalid args")
 		}
+	})
+	t.Run("SetDefaultServeMux", func(t *testing.T) {
+		resolver, err := NewResolver(resolverParentErr, []*Def{
+			&Def{NewA, PerResolve},
+		})
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		t.Run("Resolves Dependencies", func(t *testing.T) {
+			err = resolver.SetDefaultServeMux([]*HttpDef{
+				&HttpDef{Pattern: "/resolver_parent_test/set_default_server_mux/pass", Handler: func(a A) {
+					if a == nil {
+						t.Fatal("dependency is nil")
+					}
+				}},
+			})
+
+			if err != nil {
+				t.Fatal(err)
+			}
+		})
+		t.Run("Cannot Resolve Deps", func(t *testing.T) {
+			err = resolver.SetDefaultServeMux([]*HttpDef{
+				&HttpDef{Pattern: "/resolver_parent_test/set_default_server_mux/fail", Handler: "invalid handler"},
+			})
+
+			if err == nil {
+				t.Fatal("Was expecting an err but none was found")
+			}
+		})
 	})
 }
