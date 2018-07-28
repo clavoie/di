@@ -58,7 +58,7 @@ func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
 // AddAll is a bulk version of Add
 func (d *Defs) AddAll(defs []*Def) error {
 	for _, def := range defs {
-		err := d.Add(def.constructor, def.lifetime)
+		err := d.Add(def.Constructor, def.Lifetime)
 
 		if err != nil {
 			return err

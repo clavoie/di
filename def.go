@@ -2,11 +2,11 @@ package di
 
 // Def represents a dependency definition
 type Def struct {
-	// constructor is a func which instantiates the dependency
-	constructor interface{}
+	// Constructor is a func which instantiates the dependency
+	Constructor interface{}
 
-	// lifetime is the caching lifetime of the dependency
-	lifetime Lifetime
+	// Lifetime is the caching Lifetime of the dependency
+	Lifetime Lifetime
 }
 
 // NewDef creates a new dependency definition which can be added to a Defs collection.
@@ -22,7 +22,7 @@ type Def struct {
 // resolved
 func NewDef(constructor interface{}, lifetime Lifetime) *Def {
 	return &Def{
-		constructor: constructor,
-		lifetime:    lifetime,
+		Constructor: constructor,
+		Lifetime:    lifetime,
 	}
 }
