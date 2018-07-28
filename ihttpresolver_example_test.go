@@ -36,24 +36,6 @@ var deps = []*di.Def{
 	di.NewDef(NewILogger, di.Singleton),
 }
 
-func NewHttpResolver() di.IHttpResolver {
-	defs := di.NewDefs()
-	err := defs.AddAll(deps)
-
-	if err != nil {
-		panic(err)
-	}
-
-	resolver, err := di.NewResolver(defs)
-	if err != nil {
-		panic(err)
-	}
-
-	return resolver
-}
-
-var resolver = NewHttpResolver()
-
 func DepHandler(dep HttpDep)                         {}
 func HttpHandler(http.ResponseWriter, *http.Request) {}
 func WriteToLog(resolveErr *di.ErrResolve)           { /* etc */ }
@@ -63,22 +45,22 @@ func ErrHandler(err *di.ErrResolve, w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-var urlDefs = []struct {
-	url     string
-	handler interface{}
-}{
-	{"/", DepHandler},
-	{"/thing", HttpHandler},
+var httpDefs = []*di.HttpDef{
+	&di.HttpDef{DepHandler, "/"},
+	&di.HttpDef{HttpHandler, "/some/pattern"},
 }
 
 func ExampleIHttpResolver_httpHandler() {
-	for _, urlDef := range urlDefs {
-		handleFunc, err := resolver.HttpHandler(urlDef.handler, ErrHandler)
-		if err != nil {
-			panic(err)
-		}
+	resolver, err := di.NewResolver(ErrHandler, deps)
 
-		http.HandleFunc(urlDef.url, handleFunc)
+	if err != nil {
+		panic(err)
+	}
+
+	err = resolver.SetDefaultServeMux(httpDefs)
+
+	if err != nil {
+		panic(err)
 	}
 
 	// listen and serve

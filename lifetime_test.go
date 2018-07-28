@@ -1,6 +1,9 @@
 package di
 
-import "testing"
+import (
+	"net/http"
+	"testing"
+)
 
 func TestLifetime(t *testing.T) {
 	getValues := func(l Lifetime, t *testing.T) (int, int, IResolver) {
@@ -17,7 +20,9 @@ func TestLifetime(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		resolver, err := NewResolver(defs)
+		resolver, err := NewResolver(func(er *ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }, []*Def{
+			&Def{NewA, l}, &Def{NewB, PerDependency},
+		})
 
 		if err != nil {
 			t.Fatal(err)

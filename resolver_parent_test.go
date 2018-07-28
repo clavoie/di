@@ -26,24 +26,14 @@ type Logger struct {
 
 func (l *Logger) HttpDuration(time.Duration) { l.isCalled = true }
 
+func resolverParentErr(er *ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }
+
 func TestResolverParent(t *testing.T) {
 	t.Run("NewResolver", func(t *testing.T) {
 		t.Run("InvalidDefs", func(t *testing.T) {
-			defs1 := NewDefs()
-			defs2 := NewDefs()
-			err := defs1.Add(NewA, Singleton)
-
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			err = defs2.Add(NewA, PerResolve)
-
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			_, err = NewResolver(Join(defs1, defs2))
+			_, err := NewResolver(resolverParentErr, []*Def{
+				&Def{NewA, Singleton}, &Def{NewA, PerResolve},
+			})
 			if err == nil {
 				t.Fatal("expecting NewResolver error")
 			}
@@ -52,32 +42,20 @@ func TestResolverParent(t *testing.T) {
 	t.Run("HttpHandler", func(t *testing.T) {
 		w := (http.ResponseWriter)(new(TestResponseWriter))
 		r := new(http.Request)
-		defs := NewDefs()
 
 		var closer1 HttpCloser
 		closer := &closer1
-
-		err := defs.Add(func() A {
-			return closer
-		}, PerHttpRequest)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		logger := new(Logger)
-		err = defs.Add(func() ILogger { return logger }, PerHttpRequest)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		resolver, err := NewResolver(defs)
-		if err != nil {
-			t.Fatal(err)
-		}
-
 		errHandler := func(err *ErrResolve, w http.ResponseWriter, r *http.Request) {
+			t.Fatal(err)
+		}
+
+		resolver, err := NewResolver(errHandler, []*Def{
+			&Def{func() A { return closer }, PerHttpRequest},
+			&Def{func() ILogger { return logger }, PerHttpRequest},
+		})
+
+		if err != nil {
 			t.Fatal(err)
 		}
 
@@ -95,7 +73,7 @@ func TestResolverParent(t *testing.T) {
 			}
 		}
 
-		handlerFn, err := resolver.HttpHandler(handler, errHandler)
+		handlerFn, err := resolver.HttpHandler(handler)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -119,28 +97,22 @@ func TestResolverParent(t *testing.T) {
 	t.Run("ErrFn", func(t *testing.T) {
 		w := (http.ResponseWriter)(new(TestResponseWriter))
 		r := new(http.Request)
-		defs := NewDefs()
-		err := defs.Add(func() (A, error) {
-			return nil, fmt.Errorf("error")
-		}, PerHttpRequest)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		resolver, err := NewResolver(defs)
-		if err != nil {
-			t.Fatal(err)
-		}
 
 		isErrHandlerCalled := false
 		errHandler := func(err *ErrResolve, w http.ResponseWriter, r *http.Request) {
 			isErrHandlerCalled = true
 		}
 
+		resolver, err := NewResolver(errHandler, []*Def{
+			&Def{func() (A, error) { return nil, fmt.Errorf("error") }, PerHttpRequest},
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		handler := func(a A, innerW http.ResponseWriter, innerR *http.Request) {}
 
-		handlerFn, err := resolver.HttpHandler(handler, errHandler)
+		handlerFn, err := resolver.HttpHandler(handler)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -151,12 +123,12 @@ func TestResolverParent(t *testing.T) {
 		}
 	})
 	t.Run("InvalidHandler", func(t *testing.T) {
-		resolver, err := NewResolver(NewDefs())
+		resolver, err := NewResolver(resolverParentErr, []*Def{})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		_, err = resolver.HttpHandler("hello", nil)
+		_, err = resolver.HttpHandler("hello")
 		if err == nil {
 			t.Fatal("expecting http handler to fail with invalid args")
 		}

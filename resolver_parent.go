@@ -1,6 +1,7 @@
 package di
 
 import (
+	"errors"
 	"net/http"
 	"reflect"
 	"time"
@@ -19,13 +20,33 @@ type resolverParent struct {
 	perHttp    map[reflect.Type]*depNode
 	perResolve map[reflect.Type]*depNode
 	singletons *resolveCache
+
+	// errFn is used to write out dependency resolution failures
+	errFn func(*ErrResolve, http.ResponseWriter, *http.Request)
 }
 
 // NewResolver returns a new instance of IHttpResolver from
 // a collection of dependency definitions. An IResolver definition is added
 // to the collection, and can be included as a dependency for resolved types
 // and funcs
-func NewResolver(d *Defs) (IHttpResolver, error) {
+//
+// errFn is an error handling func which will be called if there is an err
+// while resolving one of the dependencies when an injected handler is
+// invoked by an http request.
+func NewResolver(errFn func(*ErrResolve, http.ResponseWriter, *http.Request), defs ...[]*Def) (IHttpResolver, error) {
+	d := NewDefs()
+	for _, def := range defs {
+		err := d.AddAll(def)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if errFn == nil {
+		return nil, errors.New("di: errFn cannot be nil")
+	}
+
 	allDeps, err := d.build()
 
 	if err != nil {
@@ -63,6 +84,7 @@ func NewResolver(d *Defs) (IHttpResolver, error) {
 		perHttp:    perHttp,
 		perResolve: perResolve,
 		singletons: singletons,
+		errFn:      errFn,
 	}, nil
 }
 
@@ -71,7 +93,7 @@ func (c *resolverParent) Curry(fn interface{}) (interface{}, *ErrResolve) {
 	return resolver.Curry(fn)
 }
 
-func (c *resolverParent) HttpHandler(fn interface{}, errFn func(*ErrResolve, http.ResponseWriter, *http.Request)) (func(http.ResponseWriter, *http.Request), error) {
+func (c *resolverParent) HttpHandler(fn interface{}) (func(http.ResponseWriter, *http.Request), error) {
 	fnValue := reflect.ValueOf(fn)
 	err := verifyFn(fnValue)
 
@@ -96,7 +118,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(*ErrResolve, htt
 			value, err := resolver.resolveUsingCache(nil, fnType.In(index))
 
 			if err != nil {
-				errFn(err, w, r)
+				c.errFn(err, w, r)
 				return
 			}
 
@@ -113,7 +135,7 @@ func (c *resolverParent) HttpHandler(fn interface{}, errFn func(*ErrResolve, htt
 			err := resolver.Resolve(&logger)
 
 			if err != nil {
-				errFn(err, w, r)
+				c.errFn(err, w, r)
 				return
 			}
 
@@ -132,4 +154,18 @@ func (c *resolverParent) Invoke(fn interface{}) *ErrResolve {
 func (c *resolverParent) Resolve(ptrToIface interface{}) *ErrResolve {
 	resolver := newResolverChild(c)
 	return resolver.Resolve(ptrToIface)
+}
+
+func (c *resolverParent) SetDefaultServeMux(httpDefs []*HttpDef) error {
+	for _, httpDef := range httpDefs {
+		injectedHandler, err := c.HttpHandler(httpDef.Handler)
+
+		if err != nil {
+			return err
+		}
+
+		http.HandleFunc(httpDef.Pattern, injectedHandler)
+	}
+
+	return nil
 }

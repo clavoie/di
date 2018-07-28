@@ -1,10 +1,15 @@
 package di
 
 import (
+	"net/http"
 	"reflect"
 	"strings"
 	"testing"
 )
+
+func resolverChildNew(defs []*Def) (IHttpResolver, error) {
+	return NewResolver(func(er *ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }, defs)
+}
 
 func TestResolverChild(t *testing.T) {
 	t.Run("Implements_IResolver", func(t *testing.T) {
@@ -19,8 +24,7 @@ func TestResolverChild(t *testing.T) {
 		}
 	})
 	t.Run("InjectsSelf", func(t *testing.T) {
-		defs := NewDefs()
-		resolver, err := NewResolver(defs)
+		resolver, err := resolverChildNew(nil)
 
 		if err != nil {
 			t.Fatal(err)
@@ -44,25 +48,11 @@ func TestResolverChild(t *testing.T) {
 		}
 	})
 	t.Run("Resolve", func(t *testing.T) {
-		deps := NewDefs()
-		err := deps.Add(NewA, PerDependency)
+		resolver, err := resolverChildNew([]*Def{
+			&Def{NewA, PerDependency}, &Def{NewDependsOnHttp, PerDependency},
+			&Def{NewSubDepNotFound, PerDependency},
+		})
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = deps.Add(NewDependsOnHttp, PerDependency)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = deps.Add(NewSubDepNotFound, PerDependency)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		resolver, err := NewResolver(deps)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -105,14 +95,7 @@ func TestResolverChild(t *testing.T) {
 		})
 	})
 	t.Run("Curry", func(t *testing.T) {
-		deps := NewDefs()
-		err := deps.Add(NewA, PerDependency)
-
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		resolver, err := NewResolver(deps)
+		resolver, err := resolverChildNew([]*Def{&Def{NewA, PerDependency}})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -184,14 +167,8 @@ func TestResolverChild(t *testing.T) {
 		})
 	})
 	t.Run("Invoke", func(t *testing.T) {
-		deps := NewDefs()
-		err := deps.Add(NewA, PerDependency)
+		resolver, err := resolverChildNew([]*Def{&Def{NewA, PerDependency}})
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		resolver, err := NewResolver(deps)
 		if err != nil {
 			t.Fatal(err)
 		}

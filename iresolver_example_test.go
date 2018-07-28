@@ -2,19 +2,21 @@ package di
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 )
+
+func iresolverNew(newDep interface{}, lifetime Lifetime) (IHttpResolver, error) {
+	return NewResolver(func(er *ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }, []*Def{
+		&Def{newDep, lifetime},
+	})
+}
 
 func ExampleIResolver_curry() {
 	type Dep interface{}
 	newDep := func() Dep { return new(struct{}) }
-	defs := NewDefs()
-	err := defs.Add(newDep, PerDependency)
-	if err != nil {
-		panic(err)
-	}
 
-	resolver, err := NewResolver(defs)
+	resolver, err := iresolverNew(newDep, PerDependency)
 	if err != nil {
 		panic(err)
 	}
@@ -38,13 +40,7 @@ func ExampleIResolver_curry() {
 func ExampleIResolver_invoke() {
 	type Dep interface{}
 	newDep := func() Dep { return new(struct{}) }
-	defs := NewDefs()
-	err := defs.Add(newDep, PerDependency)
-	if err != nil {
-		panic(err)
-	}
-
-	resolver, err := NewResolver(defs)
+	resolver, err := iresolverNew(newDep, PerDependency)
 	if err != nil {
 		panic(err)
 	}
@@ -69,13 +65,7 @@ func ExampleIResolver_invoke() {
 func ExampleIResolver_resolve() {
 	type Dep interface{}
 	newDep := func() Dep { return new(struct{}) }
-	defs := NewDefs()
-	err := defs.Add(newDep, PerDependency)
-	if err != nil {
-		panic(err)
-	}
-
-	resolver, err := NewResolver(defs)
+	resolver, err := iresolverNew(newDep, PerDependency)
 	if err != nil {
 		panic(err)
 	}
