@@ -32,8 +32,8 @@ func (pl *PrintLogger) HttpDuration(resolveDuration time.Duration) {
 }
 
 var deps = []*di.Def{
-	di.NewDef(NewHttpDep, di.PerHttpRequest),
-	di.NewDef(NewILogger, di.Singleton),
+	&di.Def{NewHttpDep, di.PerHttpRequest},
+	&di.Def{NewILogger, di.Singleton},
 }
 
 func DepHandler(dep HttpDep)                         {}

@@ -43,10 +43,10 @@ func ExampleLifetime() {
 	newPerResolve := func() PerResolve { return (PerResolve)(newImpl()) }
 
 	deps := []*di.Def{
-		di.NewDef(newSingleton, di.Singleton),
-		di.NewDef(newPerDependency, di.PerDependency),
-		di.NewDef(newPerResolve, di.PerResolve),
-		di.NewDef(NewDependent, di.PerDependency),
+		&di.Def{newSingleton, di.Singleton},
+		&di.Def{newPerDependency, di.PerDependency},
+		&di.Def{newPerResolve, di.PerResolve},
+		&di.Def{NewDependent, di.PerDependency},
 	}
 
 	errFn := func(er *di.ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }

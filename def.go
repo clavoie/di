@@ -15,11 +15,3 @@ type Def struct {
 	// it has been resolved
 	Lifetime Lifetime
 }
-
-// NewDef creates a new dependency definition which can be added to a Defs collection.
-func NewDef(constructor interface{}, lifetime Lifetime) *Def {
-	return &Def{
-		Constructor: constructor,
-		Lifetime:    lifetime,
-	}
-}
