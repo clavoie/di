@@ -123,7 +123,7 @@ func TestDefs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		defs3 := Join(defs1, defs2)
+		defs3 := joinDefCollection(defs1, defs2)
 		err = defs3.Add(NewE, Singleton)
 
 		if err != nil {
@@ -196,7 +196,7 @@ func TestDefs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			defs3 := Join(defs1, defs2)
+			defs3 := joinDefCollection(defs1, defs2)
 			_, err = defs3.build()
 
 			if err == nil {

@@ -10,8 +10,8 @@ type IHttpResolver interface {
 	// HttpHandler creates a new http request handler from a fn containing
 	// dependencies. The ResponseWriter and *Request are supplied as
 	// dependencies of the container, and will be resolved in the supplied
-	// func or one of its dependencies. errFn is an error handling func
-	// which will be called if there is an err while resolving one of the
+	// func or one of its dependencies. The errFn set at the creation of the
+	// IHttpResolver will be called if there is an err while resolving one of the
 	// dependencies.
 	//
 	// The return values are the resolver bound http handler func, and

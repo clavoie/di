@@ -113,8 +113,8 @@ func (d *defCollection) build() (map[reflect.Type]*depNode, error) {
 	return finalDeps.deps, nil
 }
 
-// Join combines two Defs collections together into a new Defs
-func Join(ds ...*defCollection) *defCollection {
+// joinDefCollection combines two Defs collections together into a new Defs
+func joinDefCollection(ds ...*defCollection) *defCollection {
 	return &defCollection{
 		deps:   make(map[reflect.Type]*depNode),
 		joined: ds,

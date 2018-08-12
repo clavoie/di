@@ -18,15 +18,25 @@ di only resolves dependencies which are interfaces, the resolver itself, http.Re
 
 ## Http
 ```go
-  resolver, err := di.NewResolver(errHandler, diDefinitions)
+  var dependencies = []*di.Def{
+    &di.Def{SomeConstructor, di.PerHttpRequest},
+    // etc...
+  }
+
+  var httpDefs = []*di.HttpDef{
+    &di.HttpDef{SomeHandler, "/some/pattern"},
+    // etc...
+  }
+
+  resolver, err := di.NewResolver(errHandler, dependencies)
   // if err
   
   err = resolver.SetDefaultServeMux(httpDefs)
   // if err
 
-  // listen and serve
+  log.Fatal(http.ListenAndServe(":8080", nil))
 ```
-[A more complete example is available here](https://godoc.org/github.com/clavoie/di#example-IHttpResolver--HttpHandler)
+[A more complete example is available here](https://godoc.org/github.com/clavoie/di#example-IHttpResolver)
 
 ## Types
 di can resolve a dependency directly if known. The dependency instance follows the lifecycle caching rules of the
