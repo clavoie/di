@@ -18,12 +18,12 @@ di only resolves dependencies which are interfaces, the resolver itself, http.Re
 
 ## Http
 ```go
-  var dependencies = []*di.Def{
+  dependencies := []*di.Def{
     &di.Def{SomeConstructor, di.PerHttpRequest},
     // etc...
   }
 
-  var httpDefs = []*di.HttpDef{
+  httpDefs := []*di.HttpDef{
     &di.HttpDef{SomeHandler, "/some/pattern"},
     // etc...
   }
