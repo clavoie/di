@@ -24,6 +24,9 @@ di only resolves dependencies which are interfaces, the resolver itself, http.Re
   }
 
   httpDefs := []*di.HttpDef{
+    // the http.ResponseWriter and *http.Request values are available as dependencies,
+    // the resolver is also available as a dependency as an di.IResolver 
+    // SomeHandler => func(dep1 Dep1, dep2 Dep2, etc) 
     &di.HttpDef{SomeHandler, "/some/pattern"},
     // etc...
   }
