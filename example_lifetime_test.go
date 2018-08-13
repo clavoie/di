@@ -2,6 +2,7 @@ package di_test
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/clavoie/di"
 )
@@ -31,28 +32,25 @@ func NewDependent(s1, s2 Singleton, d1, d2 PerDependency, r1, r2 PerResolve) Dep
 }
 
 func ExampleLifetime() {
-	defs := di.NewDefs()
 	counter := 0
 	newImpl := func() *Impl {
 		counter += 1
 		return &Impl{counter}
 	}
+
 	newSingleton := func() Singleton { return (Singleton)(newImpl()) }
 	newPerDependency := func() PerDependency { return (PerDependency)(newImpl()) }
 	newPerResolve := func() PerResolve { return (PerResolve)(newImpl()) }
+
 	deps := []*di.Def{
-		di.NewDef(newSingleton, di.Singleton),
-		di.NewDef(newPerDependency, di.PerDependency),
-		di.NewDef(newPerResolve, di.PerResolve),
-		di.NewDef(NewDependent, di.PerDependency),
-	}
-	err := defs.AddAll(deps)
-
-	if err != nil {
-		panic(err)
+		&di.Def{newSingleton, di.Singleton},
+		&di.Def{newPerDependency, di.PerDependency},
+		&di.Def{newPerResolve, di.PerResolve},
+		&di.Def{NewDependent, di.PerDependency},
 	}
 
-	resolver, err := di.NewResolver(defs)
+	errFn := func(er *di.ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) }
+	resolver, err := di.NewResolver(errFn, deps)
 	if err != nil {
 		panic(err)
 	}

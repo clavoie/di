@@ -14,23 +14,23 @@ var duplicateDefErr = errors.New("di: duplicate definition")
 // errType is the typeof(error)
 var errType = reflect.TypeOf((*error)(nil)).Elem()
 
-// Defs represents a collection of dependency definitions
-type Defs struct {
+// defCollection represents a collection of dependency definitions
+type defCollection struct {
 	deps   map[reflect.Type]*depNode
-	joined []*Defs
+	joined []*defCollection
 }
 
-// NewDefs creates a new Defs collection
-func NewDefs() *Defs {
-	return &Defs{
+// newDefCollection creates a new Defs collection
+func newDefCollection() *defCollection {
+	return &defCollection{
 		deps:   make(map[reflect.Type]*depNode),
-		joined: make([]*Defs, 0),
+		joined: make([]*defCollection, 0),
 	}
 }
 
 // Add adds a dependency definition to this Defs collection. See Def.Constructor
 // for the format of the constructor parameter
-func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
+func (d *defCollection) Add(constructor interface{}, lifetime Lifetime) error {
 	constructorValue := reflect.ValueOf(constructor)
 	arg1, err := d.verifyConstructor(constructorValue, lifetime)
 
@@ -56,9 +56,9 @@ func (d *Defs) Add(constructor interface{}, lifetime Lifetime) error {
 }
 
 // AddAll is a bulk version of Add
-func (d *Defs) AddAll(defs []*Def) error {
+func (d *defCollection) AddAll(defs []*Def) error {
 	for _, def := range defs {
-		err := d.Add(def.constructor, def.lifetime)
+		err := d.Add(def.Constructor, def.Lifetime)
 
 		if err != nil {
 			return err
@@ -68,7 +68,7 @@ func (d *Defs) AddAll(defs []*Def) error {
 	return nil
 }
 
-func (d *Defs) all() []*depNode {
+func (d *defCollection) all() []*depNode {
 	deps := make([]*depNode, 0, len(d.deps)+len(d.joined))
 
 	for _, dep := range d.deps {
@@ -82,9 +82,9 @@ func (d *Defs) all() []*depNode {
 	return deps
 }
 
-func (d *Defs) build() (map[reflect.Type]*depNode, error) {
+func (d *defCollection) build() (map[reflect.Type]*depNode, error) {
 	allDeps := d.all()
-	finalDeps := &Defs{
+	finalDeps := &defCollection{
 		deps: make(map[reflect.Type]*depNode, len(allDeps)),
 	}
 
@@ -113,15 +113,15 @@ func (d *Defs) build() (map[reflect.Type]*depNode, error) {
 	return finalDeps.deps, nil
 }
 
-// Join combines two Defs collections together into a new Defs
-func Join(ds ...*Defs) *Defs {
-	return &Defs{
+// joinDefCollection combines two Defs collections together into a new Defs
+func joinDefCollection(ds ...*defCollection) *defCollection {
+	return &defCollection{
 		deps:   make(map[reflect.Type]*depNode),
 		joined: ds,
 	}
 }
 
-func (d *Defs) verifyConstructor(constructorValue reflect.Value, lifetime Lifetime) (reflect.Type, error) {
+func (d *defCollection) verifyConstructor(constructorValue reflect.Value, lifetime Lifetime) (reflect.Type, error) {
 	var arg1 reflect.Type
 
 	if constructorValue.Kind() != reflect.Func {

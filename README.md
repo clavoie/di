@@ -1,4 +1,4 @@
-# di [![GoDoc Reference](https://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://godoc.org/github.com/clavoie/di) ![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master) [![codecov](https://codecov.io/gh/clavoie/di/branch/master/graph/badge.svg)](https://codecov.io/gh/clavoie/di) [![Go Report Card](https://goreportcard.com/badge/github.com/clavoie/di)](https://goreportcard.com/report/github.com/clavoie/di)
+# di [![GoDoc Reference](https://img.shields.io/badge/GoDoc-Reference-blue.svg)](https://godoc.org/github.com/clavoie/di) [![Build Status](https://travis-ci.org/clavoie/di.svg?branch=master)](https://travis-ci.org/clavoie/di) [![codecov](https://codecov.io/gh/clavoie/di/branch/master/graph/badge.svg)](https://codecov.io/gh/clavoie/di) [![Go Report Card](https://goreportcard.com/badge/github.com/clavoie/di)](https://goreportcard.com/report/github.com/clavoie/di)
 
 di is a dependency injection framework for Go. di supplies several dependency lifetime caching policies, provides dependency aware http handlers compatible with net/http, and provides a way to clean up dependencies instantiated during an http request.
 
@@ -18,20 +18,28 @@ di only resolves dependencies which are interfaces, the resolver itself, http.Re
 
 ## Http
 ```go
-  resolver, err := di.NewResolver(defs)
+  dependencies := []*di.Def{
+    &di.Def{SomeConstructor, di.PerHttpRequest},
+    // etc...
+  }
+
+  httpDefs := []*di.HttpDef{
+    // the http.ResponseWriter and *http.Request values are available as dependencies,
+    // the resolver is also available as a dependency as an di.IResolver 
+    // SomeHandler => func(dep1 Dep1, dep2 Dep2, etc) 
+    &di.HttpDef{SomeHandler, "/some/pattern"},
+    // etc...
+  }
+
+  resolver, err := di.NewResolver(errHandler, dependencies)
   // if err
   
-  for _, handler := range handlers {
-    // the http.ResponseWriter and *http.Request values are available as dependencies, 
-    // the resolver is also available as a dependency as an di.IResolver
-    // handler.fn => func(dep1 Dep1, dep2 Dep2, etc)
-    httpFn, err := resolver.HttpHandler(handler.fn, errFn)
-    // if err
-    
-    http.HandleFunc(handler.url, httpFn)
-  }
+  err = resolver.SetDefaultServeMux(httpDefs)
+  // if err
+
+  log.Fatal(http.ListenAndServe(":8080", nil))
 ```
-[A more complete example is available here](https://godoc.org/github.com/clavoie/di#example-IHttpResolver--HttpHandler)
+[A more complete example is available here](https://godoc.org/github.com/clavoie/di#example-IHttpResolver)
 
 ## Types
 di can resolve a dependency directly if known. The dependency instance follows the lifecycle caching rules of the
