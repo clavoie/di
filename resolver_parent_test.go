@@ -1,6 +1,7 @@
 package di
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -38,6 +39,15 @@ func TestResolverParent(t *testing.T) {
 				t.Fatal("expecting NewResolver error")
 			}
 		})
+		t.Run("Defs Cycle", func(t *testing.T) {
+			_, err := NewResolver(resolverParentErr, []*Def{
+				&Def{NewC, Singleton}, &Def{NewD, PerResolve},
+				&Def{NewE, Singleton},
+			})
+			if err == nil {
+				t.Fatal("expecting NewResolver error")
+			}
+		})
 		t.Run("InvalidErrFn", func(t *testing.T) {
 			_, err := NewResolver(nil, []*Def{})
 
@@ -53,13 +63,21 @@ func TestResolverParent(t *testing.T) {
 		var closer1 HttpCloser
 		closer := &closer1
 		logger := new(Logger)
+		errOnLogger := false
+		errCount := 0
 		errHandler := func(err *ErrResolve, w http.ResponseWriter, r *http.Request) {
-			t.Fatal(err)
+			errCount = errCount + 1
 		}
 
 		resolver, err := NewResolver(errHandler, []*Def{
 			&Def{func() A { return closer }, PerHttpRequest},
-			&Def{func() ILogger { return logger }, PerHttpRequest},
+			&Def{func() (ILogger, error) {
+				if errOnLogger {
+					return nil, errors.New("logger error")
+				}
+
+				return logger, nil
+			}, PerHttpRequest},
 		})
 
 		if err != nil {
@@ -80,26 +98,49 @@ func TestResolverParent(t *testing.T) {
 			}
 		}
 
-		handlerFn, err := resolver.HttpHandler(handler)
-		if err != nil {
-			t.Fatal(err)
-		}
+		t.Run("Happy Path", func(t *testing.T) {
+			errOnLogger = false
+			handlerFn, err := resolver.HttpHandler(handler)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		handlerFn(w, r)
-		if closer1.isClosed == false {
-			t.Fatal("dependency not closed")
-		}
+			preErrCount := errCount
+			handlerFn(w, r)
 
-		if logger.isCalled == false {
-			t.Fatal("logger not called")
-		}
+			if errCount != preErrCount {
+				t.Fatal("err encountered while running the handler")
+			}
 
-		var closer2 HttpCloser
-		closer = &closer2
-		handlerFn(w, r)
-		if closer2.isClosed == false {
-			t.Fatal("per http request not closed")
-		}
+			if closer1.isClosed == false {
+				t.Fatal("dependency not closed")
+			}
+
+			if logger.isCalled == false {
+				t.Fatal("logger not called")
+			}
+
+			var closer2 HttpCloser
+			closer = &closer2
+			handlerFn(w, r)
+			if closer2.isClosed == false {
+				t.Fatal("per http request not closed")
+			}
+		})
+		t.Run("Err resolving Logger", func(t *testing.T) {
+			errOnLogger = true
+			handlerFn, err := resolver.HttpHandler(handler)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			preErrCount := errCount
+			handlerFn(w, r)
+
+			if errCount == preErrCount {
+				t.Fatal("expecting err while resolving logger")
+			}
+		})
 	})
 	t.Run("ErrFn", func(t *testing.T) {
 		w := (http.ResponseWriter)(new(TestResponseWriter))
