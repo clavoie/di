@@ -15,7 +15,7 @@ func ExampleIResolver_curry() {
 	resolver, err := di.NewResolver(
 		func(er *di.ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) },
 		[]*di.Def{
-			&di.Def{newDep, di.PerDependency},
+			{newDep, di.PerDependency},
 		})
 	if err != nil {
 		panic(err)
@@ -43,7 +43,7 @@ func ExampleIResolver_invoke() {
 	resolver, err := di.NewResolver(
 		func(er *di.ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) },
 		[]*di.Def{
-			&di.Def{newDep, di.PerDependency},
+			{newDep, di.PerDependency},
 		})
 	if err != nil {
 		panic(err)
@@ -72,7 +72,7 @@ func ExampleIResolver_resolve() {
 	resolver, err := di.NewResolver(
 		func(er *di.ErrResolve, w http.ResponseWriter, r *http.Request) { panic(er) },
 		[]*di.Def{
-			&di.Def{newDep, di.PerDependency},
+			{newDep, di.PerDependency},
 		})
 	if err != nil {
 		panic(err)

@@ -36,14 +36,14 @@ func (pl *PrintLogger) HttpDuration(resolveDuration time.Duration) {
 }
 
 var deps = []*di.Def{
-	&di.Def{NewDependency, di.PerHttpRequest},
-	&di.Def{NewILogger, di.Singleton},
+	{NewDependency, di.PerHttpRequest},
+	{NewILogger, di.Singleton},
 }
 
 func Handler(dep SomeDependency) { /* handle request */ }
 
 var httpDefs = []*di.HttpDef{
-	&di.HttpDef{Handler, "/some/pattern"},
+	{Handler, "/some/pattern"},
 }
 
 func ExampleIHttpResolver() {
