@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/clavoie/di"
+	"github.com/clavoie/di/v2"
 )
 
 func ExampleIResolver_curry() {

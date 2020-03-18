@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/clavoie/di"
+	"github.com/clavoie/di/v2"
 )
 
 func ErrHandler(err *di.ErrResolve, w http.ResponseWriter, r *http.Request) {

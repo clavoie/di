@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/clavoie/di"
+	"github.com/clavoie/di/v2"
 )
 
 type Singleton interface {
